@@ -1,0 +1,190 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// NextAuth models
+model Account {
+  id                String  @id @default(uuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// User model updated for NextAuth and groups
+model User {
+  id            String      @id @default(uuid())
+  name          String?
+  email         String?     @unique
+  emailVerified DateTime?   @map("email_verified")
+  image         String?
+  password      String? // Optional for credential auth; null for OAuth
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+  accounts      Account[]
+  sessions      Session[]
+  groups        UserGroup[] // Many-to-many with Group
+
+  @@map("users")
+}
+
+// Group model for role-based access
+model Group {
+  id          String            @id @default(uuid())
+  name        String            @unique // e.g., "Admins", "Technicians"
+  description String?
+  users       UserGroup[] // Many-to-many with User
+  permissions GroupPermission[] // Many-to-many with Permission
+  created_at  DateTime          @default(now())
+  updated_at  DateTime          @updatedAt
+}
+
+// Permission model for specific access rights
+model Permission {
+  id          String            @id @default(uuid())
+  name        String            @unique // e.g., "equipment:read", "equipment:write"
+  description String?
+  groups      GroupPermission[] // Many-to-many with Group
+  created_at  DateTime          @default(now())
+  updated_at  DateTime          @updatedAt
+}
+
+// Junction table for User-Group relationship
+model UserGroup {
+  user_id     String
+  group_id    String
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  group       Group    @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  assigned_at DateTime @default(now())
+
+  @@id([user_id, group_id])
+  @@map("user_groups")
+}
+
+// Junction table for Group-Permission relationship
+model GroupPermission {
+  group_id      String
+  permission_id String
+  group         Group      @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  permission    Permission @relation(fields: [permission_id], references: [id], onDelete: Cascade)
+  assigned_at   DateTime   @default(now())
+
+  @@id([group_id, permission_id])
+  @@map("group_permissions")
+}
+
+model Direction {
+  id          String       @id @default(uuid())
+  name        String
+  departments Department[]
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+  Equipment   Equipment[]
+}
+
+model Department {
+  id           String        @id @default(uuid())
+  name         String
+  direction_id String
+  direction    Direction     @relation(fields: [direction_id], references: [id])
+  sectors      Sector[]
+  repartitions Repartition[]
+  services     Service[]
+  equipment    Equipment[]
+  created_at   DateTime      @default(now())
+  updated_at   DateTime      @updatedAt
+}
+
+model Sector {
+  id            String      @id @default(uuid())
+  name          String
+  department_id String
+  department    Department  @relation(fields: [department_id], references: [id])
+  equipment     Equipment[]
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+}
+
+model Service {
+  id            String      @id @default(uuid())
+  name          String
+  department_id String?
+  department    Department? @relation(fields: [department_id], references: [id])
+  equipment     Equipment[]
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+}
+
+model Repartition {
+  id            String      @id @default(uuid())
+  name          String
+  department_id String
+  department    Department  @relation(fields: [department_id], references: [id])
+  equipment     Equipment[]
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+}
+
+model Equipment {
+  id             String       @id @default(uuid())
+  serial_number  String?      @unique
+  type           String
+  brand          String
+  model          String
+  purchase_date  DateTime?
+  warranty_end   DateTime?
+  status         String // e.g., "ACTIVE", "MAINTENANCE", "RETIRED"
+  direction_id   String?
+  department_id  String?
+  sector_id      String?
+  service_id     String?
+  repartition_id String?
+  direction      Direction?   @relation(fields: [direction_id], references: [id])
+  department     Department?  @relation(fields: [department_id], references: [id])
+  sector         Sector?      @relation(fields: [sector_id], references: [id])
+  service        Service?     @relation(fields: [service_id], references: [id])
+  repartition    Repartition? @relation(fields: [repartition_id], references: [id])
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
+}
