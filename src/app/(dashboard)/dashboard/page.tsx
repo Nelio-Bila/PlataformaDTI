@@ -1,7 +1,8 @@
 "use client";
 
+import { fetch_statistics } from "@/actions/dashboard";
+import DashboardSkeleton from "@/components/skeletons/dashboard-skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { fetch_statistics } from "@/lib/dashboard-actions";
 import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 // import { useSession } from "next-auth/react";
@@ -43,9 +44,7 @@ export default function DashboardHomePage() {
         <h1 className="text-3xl font-bold text-gray-800">Painel</h1>
 
         {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <Loader2 className="h-8 w-8 animate-spin" />
-          </div>
+          <DashboardSkeleton/>
         ) : (
           <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
             {/* Total Equipment Card */}

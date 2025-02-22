@@ -23,6 +23,7 @@ export default function AuthLayout({
             />
           </Link>
           <p className="text-3xl font-bold tracking-tight text-center">
+            Departamento de Tecnologias de Informação
             {process.env.APP_NAME}
           </p>
           {children}

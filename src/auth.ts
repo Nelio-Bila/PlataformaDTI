@@ -1,3 +1,5 @@
+//src/auth.ts
+
 import { db } from "@/lib/db";
 import { SafeUserType } from "@/types";
 import { PrismaAdapter } from "@auth/prisma-adapter";

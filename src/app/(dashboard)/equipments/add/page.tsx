@@ -11,16 +11,17 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const breadcrumbItems = [
   { title: "Painel", link: "/dashboard" },
-  { title: "Equipamentos", link: "/dashboard/equipments" },
+  { title: "Equipamentos", link: "/equipments" },
+  { title: "Registro de Equipamento", link: "/equipments/add" },
 ];
 
 export default function EquipmentAddPage() {
-    return (
-        <div className="space-y-6">
-            <Breadcrumbs items={breadcrumbItems} />
-            <h1 className="text-2xl font-bold text-center">Registro de equipamento</h1>
-                <EquipmentForm />
-        </div>
+  return (
+    <div className="p-6 w-full">
+      <Breadcrumbs items={breadcrumbItems} />
+      <h1 className="text-2xl font-bold text-center my-3">Registro de equipamento</h1>
+      <EquipmentForm />
+    </div>
 
-    )
+  )
 }

@@ -1,7 +1,8 @@
+import { MobileSidebar } from "@/components/layout/mobile-sidebar";
 import ThemeToggle from "@/components/layout/theme-toggle/theme-toggle";
+import NewResource from "@/components/shared/new-resource";
+import { UserNav } from "@/components/shared/user-nav";
 import { cn } from "@/lib/utils";
-import { MobileSidebar } from "./mobile-sidebar";
-// import { UserNav } from "./user-nav";
 
 
 export default function Header() {
@@ -12,8 +13,9 @@ export default function Header() {
           <MobileSidebar />
         </div>
         <div className="flex items-center gap-2">
+          <NewResource />
           <ThemeToggle />
-          {/* <UserNav /> */}
+          <UserNav />
         </div>
       </nav>
     </header>

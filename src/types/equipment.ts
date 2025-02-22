@@ -15,9 +15,26 @@ export interface Equipment {
     repartition_id: string | null;
     created_at: string; // ISO string or Date
     updated_at: string; // ISO string or Date
+    images: EquipmentImage[];
     direction?: { name: string; id: string; created_at: Date; updated_at: Date } | null;
     department?: { name: string; id: string; created_at: Date; updated_at: Date; direction_id: string } | null;
     sector?: { name: string; id: string; created_at: Date; updated_at: Date; department_id: string } | null;
     service?: { name: string; id: string; created_at: Date; updated_at: Date; department_id: string | null } | null;
     repartition?: { name: string; id: string; created_at: Date; updated_at: Date; department_id: string } | null;
 }
+
+
+export interface EquipmentImage {
+  id: string;
+  equipment_id: string;
+  url: string;
+  description?: string | null;
+  created_at: string;
+}
+
+  export interface FilterOptions {
+    types: string[];
+    statuses: string[];
+    directions: { id: string; name: string }[];
+    departments: { id: string; name: string; direction_id: string }[];
+  }
