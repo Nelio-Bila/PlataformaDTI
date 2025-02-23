@@ -14,6 +14,7 @@ const eslintConfig = [
   {
     rules: {
       "@typescript-eslint/no-explicit-any": "off", // Disable the rule entirely
+      "@typescript-eslint/no-empty-object-type": "off"
     },
   },
 ];
