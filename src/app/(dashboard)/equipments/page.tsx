@@ -16,21 +16,8 @@ const breadcrumbItems = [
   { title: "Equipamento", link: "/equipment" },
 ];
 
-// export default function page() {
-//   return (
-//     <PageContainer>
-//       <div className="space-y-2">
-//         <Breadcrumbs items={breadcrumbItems} />
-//         <EquipmentClient />
-//       </div>
-//     </PageContainer>
-//   );
-// }
 
-
-// src/app/(dashboard)/equipments/page.tsx
-// src/app/(dashboard)/equipments/page.tsx
-export default function page() {
+export default function EquipmentsPage() {
   return (
     <PageContainer>
       <div className="p-6 w-full">

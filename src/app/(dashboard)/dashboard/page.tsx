@@ -4,7 +4,6 @@ import { fetch_statistics } from "@/actions/dashboard";
 import DashboardSkeleton from "@/components/skeletons/dashboard-skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
 // import { useSession } from "next-auth/react";
 import {
   Bar,
@@ -25,9 +24,6 @@ export default function DashboardHomePage() {
     // enabled: !!session?.user?.groups?.some((g) => g.permissions.includes("dashboard:read")),
   });
 
-  // if (status === "loading") {
-  //   return <div>Loading...</div>;
-  // }
 
 //   if (!session?.user?.groups?.some((g) => g.permissions.includes("dashboard:read"))) {
 //     return (
@@ -41,7 +37,7 @@ export default function DashboardHomePage() {
   return (
 
       <div className="p-6 space-y-6">
-        <h1 className="text-3xl font-bold text-gray-800">Painel</h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-50">Painel</h1>
 
         {isLoading ? (
           <DashboardSkeleton/>

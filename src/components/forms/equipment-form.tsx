@@ -1033,6 +1033,7 @@ import {
   Upload,
   Wrench,
 } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "nextjs-toploader/app";
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -1289,7 +1290,7 @@ export function EquipmentForm() {
                       aria-describedby="type-description"
                     />
                   </FormControl>
-                  <FormDescription id="type-description">Exemplo: "PC".</FormDescription>
+                  <FormDescription id="type-description">Exemplo: PC.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -1318,7 +1319,7 @@ export function EquipmentForm() {
                       aria-describedby="brand-description"
                     />
                   </FormControl>
-                  <FormDescription id="brand-description">Exemplo: "Lenovo".</FormDescription>
+                  <FormDescription id="brand-description">Exemplo: Lenovo.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -1347,7 +1348,7 @@ export function EquipmentForm() {
                       aria-describedby="model-description"
                     />
                   </FormControl>
-                  <FormDescription id="model-description">Exemplo: "ThinkStation".</FormDescription>
+                  <FormDescription id="model-description">Exemplo: ThinkStation.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -1465,7 +1466,7 @@ export function EquipmentForm() {
                       </Command>
                     </PopoverContent>
                   </Popover>
-                  <FormDescription id="status-description">Exemplo: "Ativo" ou "Manutenção".</FormDescription>
+                  <FormDescription id="status-description">Exemplo: Activo ou Manutenção.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -1523,7 +1524,7 @@ export function EquipmentForm() {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {files.map((file, index) => (
                   <div key={index} className="relative bg-white dark:bg-gray-950 p-2 rounded-lg shadow">
-                    <img src={URL.createObjectURL(file)} alt={file.name} className="w-full h-32 object-cover rounded" />
+                    <Image src={URL.createObjectURL(file)} alt={file.name} className="w-full h-32 object-cover rounded" />
                     <p className="text-sm text-gray-600 truncate mt-1">{file.name}</p>
                     <Button
                       variant="destructive"

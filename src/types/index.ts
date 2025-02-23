@@ -5,6 +5,7 @@ export interface SafeUserType {
     id: string; // Required: User's unique ID from Prisma
     name?: string | null; // Optional: User's name, nullable per Prisma schema
     email?: string | null; // Optional: User's email, nullable per Prisma schema
+    updated_at?: string | null;
     groups?: Array<{
         name: string; // Group name from Prisma Group model
         permissions: string[]; // Array of permission names from Prisma Permission model

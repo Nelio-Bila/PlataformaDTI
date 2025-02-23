@@ -1,9 +1,8 @@
-import type { NextAuthConfig } from "next-auth";
+import type { NextAuthOptions } from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import { login } from "@/actions/auth-actions";
 
 export const authConfig = {
-  session: {
-    strategy: "jwt",
-  },
   pages: {
     error: "/",
     signIn: "/",
@@ -12,9 +11,21 @@ export const authConfig = {
   callbacks: {
     authorized({ auth }) {
       const isAuthenticated = !!auth?.user;
-
       return isAuthenticated;
     },
   },
-  providers: [],
-} satisfies NextAuthConfig;
+  providers: [
+    Credentials({
+      name: "credentials",
+      credentials: {
+        email: { label: "E-mail", type: "email" },
+        password: { label: "Senha", type: "password" },
+      },
+      async authorize(credentials) {
+        return login(credentials.email as string, credentials.password as string);
+      },
+    }),
+  ],
+} satisfies NextAuthOptions;
+
+

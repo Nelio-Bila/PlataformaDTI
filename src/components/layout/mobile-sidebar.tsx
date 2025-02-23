@@ -6,10 +6,7 @@ import { MenuIcon } from "lucide-react";
 import { useState } from "react";
 
 
-interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
-}
-
-export function MobileSidebar({ className }: SidebarProps) {
+export function MobileSidebar() {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -21,7 +18,7 @@ export function MobileSidebar({ className }: SidebarProps) {
           <div className="space-y-4 py-4">
             <div className="px-3 py-2">
               <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
-                Overview
+                Menu
               </h2>
               <div className="space-y-1">
                 <DashboardNav

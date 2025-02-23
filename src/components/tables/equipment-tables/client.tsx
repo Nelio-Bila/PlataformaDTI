@@ -407,7 +407,7 @@ export function EquipmentClient() {
             setPageIndex(0);
             refetch();
           }}
-          className="max-w-xs"
+          // className="max-w-xs"
         />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -434,7 +434,7 @@ export function EquipmentClient() {
           <span>Exportar para Excel</span>
 
         </Button>
-        <Link href="/equipments/add">
+        <Link href="/equipments/add" className="flex justify-end">
           <Button>
             <PackagePlus />
             <span>Registrar Equipamento</span>
