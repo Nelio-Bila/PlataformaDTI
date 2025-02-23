@@ -1,4 +1,5 @@
-declare module "next-auth" {
+import { DefaultSession } from "next-auth";
+export declare module "next-auth" {
     interface Session {
         user: {
             id: string; // From JWT token.id and Prisma user
@@ -8,7 +9,7 @@ declare module "next-auth" {
                 name: string;
                 permissions: string[];
             }>; // From Prisma session callback
-        };
+        }& DefaultSession["user"];
     }
 
     interface User {
@@ -18,8 +19,11 @@ declare module "next-auth" {
     }
 }
 
-declare module "next-auth/jwt" {
+export declare module "next-auth/jwt" {
     interface JWT {
         id?: string; // Only id is stored in JWT
     }
 }
+
+
+

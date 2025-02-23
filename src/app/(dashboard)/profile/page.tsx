@@ -219,15 +219,15 @@ const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({ user }) => {
     }
 
     try {
-      const result = await update_profile(user.email as string, data);
+      const result = await update_profile(user.id as string, data);
 
       if (!result.success) {
-        setError(result.error || "Erro ao atualizar perfil");
+        setError(result.error || "Erro ao actualizar perfil");
         return;
       }
 
       toast({
-        title: "Perfil atualizado",
+        title: "Perfil actualizado",
         description: "Suas informações foram atualizadas com sucesso.",
       });
       setIsOpen(false);

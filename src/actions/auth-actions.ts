@@ -116,7 +116,7 @@ export async function update_password(
 }
 
 export async function update_profile(
-  email: string,
+  id: string,
   data: z.infer<typeof UpdateProfileSchema>
 ) {
   try {
@@ -128,7 +128,7 @@ export async function update_profile(
     const validatedFields = UpdateProfileSchema.parse(cleanedData);
 
     await db.user.update({
-      where: { email: email },
+      where: { id: id },
       data: {
         ...validatedFields,
         updated_at: new Date(),
