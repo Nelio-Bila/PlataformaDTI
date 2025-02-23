@@ -25,20 +25,20 @@ interface DistributionItem {
   // count: number;
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
+// const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658'];
 
-// Component to display percentage and count in tooltips
-const CustomTooltip: React.FC<{ active?: boolean; payload?: { value: number; payload: { total: number } }[]; label?: string }> = ({ active, payload, label }) => {
-  if (active && payload && payload.length) {
-    return (
-      <div className="bg-white dark:bg-background p-2 border rounded shadow">
-        <p className="label">{`${label}`}</p>
-        <p className="value">{`${payload[0].value} (${Math.round(payload[0].value / payload[0].payload.total * 100)}%)`}</p>
-      </div>
-    );
-  }
-  return null;
-};
+// // Component to display percentage and count in tooltips
+// const CustomTooltip: React.FC<{ active?: boolean; payload?: { value: number; payload: { total: number } }[]; label?: string }> = ({ active, payload, label }) => {
+//   if (active && payload && payload.length) {
+//     return (
+//       <div className="bg-white dark:bg-background p-2 border rounded shadow">
+//         <p className="label">{`${label}`}</p>
+//         <p className="value">{`${payload[0].value} (${Math.round(payload[0].value / payload[0].payload.total * 100)}%)`}</p>
+//       </div>
+//     );
+//   }
+//   return null;
+// };
 
 export default function DashboardHomePage() {
   // const { data: session, status } = useSession();
