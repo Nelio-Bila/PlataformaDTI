@@ -48,8 +48,8 @@ export default function DashboardHomePage() {
               <CardHeader>
                 <CardTitle>Total Equipmentos registrados</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-6xl text-center font-bold text-blue-600">{data?.total_equipment || 0}</p>
+              <CardContent className="flex justify-center items-center align-middle">
+                <p className="text-6xl text-center font-bold text-primary">{data?.total_equipment || 0}</p>
               </CardContent>
             </Card>
 
@@ -65,7 +65,7 @@ export default function DashboardHomePage() {
                     <XAxis dataKey="status" />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="count" fill="#8884d8" />
+                    <Bar dataKey="count" fill="#005DB2" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -83,7 +83,7 @@ export default function DashboardHomePage() {
                     <XAxis dataKey="department" angle={-45} textAnchor="end" height={70} />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="count" fill="#82ca9d" />
+                    <Bar dataKey="count" fill="#005DB2" />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
