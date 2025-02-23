@@ -40,11 +40,6 @@ type ProfileFormData = {
   name: string;
 };
 
-type ServerActionResponse = {
-  success: boolean;
-  error?: string;
-};
-
 interface PasswordResetModalProps {
   userId: string;
 }
@@ -132,6 +127,7 @@ const PasswordResetModal: React.FC<PasswordResetModalProps> = ({ userId }) => {
       setIsOpen(false);
     } catch (err) {
       setError("Erro ao atualizar a senha");
+      console.log(err)
     } finally {
       setIsLoading(false);
     }
@@ -237,6 +233,7 @@ const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({ user }) => {
       setIsOpen(false);
     } catch (err) {
       setError("Erro ao atualizar o perfil");
+      console.log(err)
     } finally {
       setIsLoading(false);
     }
