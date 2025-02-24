@@ -1,11 +1,9 @@
+"use client";
 
-
-"use client"
-import { update_password, update_profile } from "@/actions/auth-actions";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -16,20 +14,20 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { getInitials } from '@/lib/utils';
-import { SafeUserType } from '@/types';
+import { getInitials } from "@/lib/utils";
+import { SafeUserType } from "@/types";
 import { PersonIcon } from "@radix-ui/react-icons";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertCircle, Mail, Shield, UserIcon } from "lucide-react";
-import { useSession } from 'next-auth/react';
-import type { FormEvent } from 'react';
-import { useState } from 'react';
-import ProfileSkeleton from './loading';
+import { useSession } from "next-auth/react";
+import type { FormEvent } from "react";
+import { useState } from "react";
+import ProfileSkeleton from "./loading";
 
-
-// Types for form data and server action responses
+// Types for form data
 type PasswordFormData = {
   currentPassword: string;
   newPassword: string;
@@ -39,16 +37,6 @@ type PasswordFormData = {
 type ProfileFormData = {
   name: string;
 };
-
-interface PasswordResetModalProps {
-  userId: string;
-}
-
-interface ProfileUpdateModalProps {
-  user: SafeUserType;
-}
-
-
 
 const ProfileOverview = ({ user }: { user: SafeUserType }) => (
   <div className="space-y-6">
@@ -65,7 +53,7 @@ const ProfileOverview = ({ user }: { user: SafeUserType }) => (
                 <PersonIcon className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Nome Completo</span>
               </div>
-              <p className="text-sm font-medium">{user.name || "N/A"}</p>
+              <p className="text-sm font-medium">{user?.name || "N/A"}</p>
             </div>
 
             <div className="space-y-2">
@@ -73,23 +61,21 @@ const ProfileOverview = ({ user }: { user: SafeUserType }) => (
                 <Mail className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm text-muted-foreground">Email</span>
               </div>
-              <p className="text-sm font-medium">{user.email || "N/A"}</p>
+              <p className="text-sm font-medium">{user?.email || "N/A"}</p>
             </div>
           </div>
-
         </div>
       </CardContent>
     </Card>
   </div>
 );
 
-
-
-const PasswordResetModal: React.FC<PasswordResetModalProps> = ({ userId }) => {
+const PasswordResetModal: React.FC<{ userId: string }> = ({ userId }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -110,24 +96,28 @@ const PasswordResetModal: React.FC<PasswordResetModalProps> = ({ userId }) => {
     }
 
     try {
-      const result = await update_password(userId, {
-        currentPassword: data.currentPassword,
-        newPassword: data.newPassword,
+      const response = await fetch(`/api/auth/update-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, currentPassword: data.currentPassword, newPassword: data.newPassword }),
       });
 
-      if (!result.success) {
-        setError(result.error || "Erro ao atualizar senha");
+      const result = await response.json();
+
+      if (!response.ok) {
+        setError(result.error || "Erro ao actualizar senha");
         return;
       }
 
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+
       toast({
-        title: "Senha atualizada",
+        title: "Senha actualizada",
         description: "Sua senha foi atualizada com sucesso.",
       });
       setIsOpen(false);
     } catch (err) {
       setError("Erro ao atualizar a senha");
-      console.log(err)
     } finally {
       setIsLoading(false);
     }
@@ -141,9 +131,7 @@ const PasswordResetModal: React.FC<PasswordResetModalProps> = ({ userId }) => {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Alterar Palavra-passe</DialogTitle>
-          <DialogDescription>
-            Digite sua senha actual e a nova senha para atualizar
-          </DialogDescription>
+          <DialogDescription>Digite sua senha actual e a nova senha para atualizar</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
@@ -154,38 +142,19 @@ const PasswordResetModal: React.FC<PasswordResetModalProps> = ({ userId }) => {
           )}
           <div className="space-y-2">
             <Label htmlFor="currentPassword">Senha Atual</Label>
-            <Input
-              id="currentPassword"
-              name="currentPassword"
-              type="password"
-              required
-            />
+            <Input id="currentPassword" name="currentPassword" type="password" required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="newPassword">Nova Senha</Label>
-            <Input
-              id="newPassword"
-              name="newPassword"
-              type="password"
-              required
-            />
+            <Input id="newPassword" name="newPassword" type="password" required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
-            <Input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              required
-            />
+            <Input id="confirmPassword" name="confirmPassword" type="password" required />
           </div>
           <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Actualizando..." : "Actualizar Senha"}
-            </Button>
+            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancelar</Button>
+            <Button type="submit" disabled={isLoading}>{isLoading ? "Actualizando..." : "Actualizar Senha"}</Button>
           </div>
         </form>
       </DialogContent>
@@ -193,11 +162,13 @@ const PasswordResetModal: React.FC<PasswordResetModalProps> = ({ userId }) => {
   );
 };
 
-const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({ user }) => {
+// const ProfileUpdateModal: React.FC<{ user: SafeUserType }> = ({ user }) => {
+const ProfileUpdateModal: React.FC<{ user: SafeUserType; }> = ({ user }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [error, setError] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -205,13 +176,10 @@ const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({ user }) => {
     setIsLoading(true);
 
     const formData = new FormData(e.currentTarget);
-
-    // Clean form data by converting empty strings to null
     const data: ProfileFormData = {
-      name: formData.get("name") as string || user.name || "", // Fallback to current name or empty string
+      name: formData.get("name") as string || user.name || "",
     };
 
-    // Validate required name field
     if (!data.name.trim()) {
       setError("Nome é obrigatório");
       setIsLoading(false);
@@ -219,21 +187,29 @@ const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({ user }) => {
     }
 
     try {
-      const result = await update_profile(user.id as string, data);
+      const response = await fetch(`/api/auth/update-profile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: user.id, name: data.name }),
+      });
 
-      if (!result.success) {
+      const result = await response.json();
+
+      if (!response.ok) {
         setError(result.error || "Erro ao actualizar perfil");
         return;
       }
 
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+
       toast({
         title: "Perfil actualizado",
-        description: "Suas informações foram atualizadas com sucesso.",
+        description: "Suas informações foram actualizadas com sucesso.",
       });
+
       setIsOpen(false);
     } catch (err) {
       setError("Erro ao atualizar o perfil");
-      console.log(err)
     } finally {
       setIsLoading(false);
     }
@@ -247,9 +223,7 @@ const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({ user }) => {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Actualizar Perfil</DialogTitle>
-          <DialogDescription>
-            Actualize suas informações de perfil
-          </DialogDescription>
+          <DialogDescription>Actualize suas informações de perfil</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
@@ -260,20 +234,11 @@ const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({ user }) => {
           )}
           <div className="space-y-2">
             <Label htmlFor="name">Nome</Label>
-            <Input
-              id="name"
-              name="name"
-              defaultValue={user?.name || ""}
-              required
-            />
+            <Input id="name" name="name" defaultValue={user?.name || ""} required />
           </div>
           <div className="flex justify-end gap-4">
-            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Actualizando..." : "Actualizar Perfil"}
-            </Button>
+            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>Cancelar</Button>
+            <Button type="submit" disabled={isLoading}>{isLoading ? "Actualizando..." : "Actualizar Perfil"}</Button>
           </div>
         </form>
       </DialogContent>
@@ -281,9 +246,21 @@ const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({ user }) => {
   );
 };
 
-
 const ProfilePage = () => {
   const { data: session, status } = useSession();
+  // Fetch filter options
+  const { data, isLoading: isLoadingUser, error: userError } = useQuery({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      const response = await fetch(`/api/auth/profile/${session?.user?.id}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!response.ok) throw new Error("Failed to fetch profile");
+      return response.json() as Promise<{ user: SafeUserType }>;
+    },
+  });
+
 
   if (status === "loading") {
     return <ProfileSkeleton />;
@@ -294,15 +271,15 @@ const ProfilePage = () => {
       <div className="container mx-auto p-6 max-w-7xl space-y-8">
         <Alert variant="destructive">
           <AlertTitle>Erro</AlertTitle>
-          <AlertDescription>
-            Você precisa estar autenticado para visualizar esta página.
-          </AlertDescription>
+          <AlertDescription>Você precisa estar autenticado para visualizar esta página.</AlertDescription>
         </Alert>
       </div>
     );
   }
 
-  const user = session.user as SafeUserType;
+  if (isLoadingUser) {
+    return <ProfileSkeleton />
+  }
 
   return (
     <div className="container mx-auto p-6 max-w-7xl space-y-8">
@@ -310,14 +287,15 @@ const ProfilePage = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center space-x-4">
             <Avatar className="h-20 w-20">
-              <AvatarImage src={"/api/placeholder/100/100"} alt={user.name || "User"} />
-              <AvatarFallback>{getInitials(user.name || "User")}</AvatarFallback>
+              <AvatarImage src={"/api/placeholder/100/100"} alt={data?.user?.name || "User"} />
+              <AvatarFallback>{getInitials(data?.user?.name || "User")}</AvatarFallback>
             </Avatar>
             <div className="space-y-1">
-              <h1 className="text-2xl font-bold">{user.name || "Anonymous"}</h1>
+              <h1 className="text-2xl font-bold">{data?.user?.name || "Anonymous"}</h1>
             </div>
           </div>
-          <ProfileUpdateModal user={user} />
+
+          <ProfileUpdateModal user={data?.user as SafeUserType} />
         </div>
         <Separator />
       </div>
@@ -337,11 +315,10 @@ const ProfilePage = () => {
         <TabsContent value="overview" className="space-y-4">
           <Alert>
             <AlertDescription>
-              Teu perfil foi atualizado pela última vez em{" "}
-              {new Date(user?.updated_at || Date.now()).toLocaleDateString()}
+              Teu perfil foi atualizado pela última vez em {new Date(data?.user?.updated_at || Date.now()).toLocaleDateString()}
             </AlertDescription>
           </Alert>
-          <ProfileOverview user={user} />
+          <ProfileOverview user={data?.user as SafeUserType} />
         </TabsContent>
 
         <TabsContent value="security" className="space-y-4">
@@ -356,11 +333,9 @@ const ProfilePage = () => {
                 <div className="flex justify-between items-center">
                   <div>
                     <h4 className="font-medium">Alterar palavra-passe</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Actualize sua palavra-passe regularmente
-                    </p>
+                    <p className="text-sm text-muted-foreground">Actualize sua palavra-passe regularmente</p>
                   </div>
-                  <PasswordResetModal userId={user.id} />
+                  <PasswordResetModal userId={data?.user?.id as string} />
                 </div>
               </div>
             </CardContent>

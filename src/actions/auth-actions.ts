@@ -1,3 +1,4 @@
+// src/actions/auth-actions.ts
 "use server";
 
 import { db } from "@/lib/db";
@@ -12,11 +13,6 @@ const UpdatePasswordSchema = z.object({
 
 const UpdateProfileSchema = z.object({
   name: z.string().min(1, "Nome é obrigatório"),
-  // phone: z.string().optional(),
-  // birthDate: z.string().optional(),
-  // location: z.string().optional(),
-  // occupation: z.string().optional(),
-  // address: z.string().optional(),
 });
 
 export async function hash_password(password: string) {

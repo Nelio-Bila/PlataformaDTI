@@ -140,11 +140,15 @@ model Department {
 model Sector {
   id            String      @id @default(uuid())
   name          String
-  department_id String
-  department    Department  @relation(fields: [department_id], references: [id])
+  department_id String? // Optional relationship with Department
+  service_id    String? // Optional relationship with Service
+  department    Department? @relation(fields: [department_id], references: [id])
+  service       Service?    @relation(fields: [service_id], references: [id])
   equipment     Equipment[]
   created_at    DateTime    @default(now())
   updated_at    DateTime    @updatedAt
+
+  @@unique([department_id, service_id]) // Ensure a sector can't belong to both a department and a service simultaneously
 }
 
 model Service {
@@ -157,6 +161,7 @@ model Service {
   equipment     Equipment[]
   created_at    DateTime    @default(now())
   updated_at    DateTime    @updatedAt
+  Sector        Sector[]
 }
 
 model Repartition {

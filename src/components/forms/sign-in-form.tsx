@@ -1,7 +1,8 @@
-// components/forms/sign-in-form.tsx
+// src/components/forms/sign-in-form.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox"; // Import Checkbox
 import {
   Form,
   FormControl,
@@ -15,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
+import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { PasswordInput } from "../ui/password-input";
@@ -38,6 +39,9 @@ export function SignInForm() {
     },
   });
   const { toast } = useToast();
+
+  // State to manage password visibility
+  const [showPassword, setShowPassword] = React.useState(false);
 
   const on_submit = (values: SignInFormData) => {
     start_transition(async () => {
@@ -87,8 +91,22 @@ export function SignInForm() {
             <FormItem>
               <FormLabel>Senha</FormLabel>
               <FormControl>
-                <PasswordInput placeholder="Digite sua senha" type="password" {...field} />
+                <PasswordInput
+                  placeholder="Digite sua senha"
+                  {...field}
+                  showPassword={showPassword} // Pass showPassword state to control visibility
+                />
               </FormControl>
+              <div className="mt-2 flex items-center space-x-2">
+                <Checkbox
+                  id="show-password"
+                  checked={showPassword}
+                  onCheckedChange={(checked) => setShowPassword(checked as boolean)}
+                />
+                <label htmlFor="show-password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Mostrar senha
+                </label>
+              </div>
               <FormMessage />
             </FormItem>
           )}
@@ -96,9 +114,12 @@ export function SignInForm() {
         {form.formState.errors.root && (
           <p className="text-red-500 text-sm">{form.formState.errors.root.message}</p>
         )}
-        <Button type="submit" className="w-full" disabled={is_pending}>
+        <div className="flex justify-end">
+
+        <Button type="submit" className="" disabled={is_pending}>
           {is_pending ? "Entrando..." : "Entrar"}
         </Button>
+        </div>
       </form>
     </Form>
   );

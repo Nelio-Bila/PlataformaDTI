@@ -1,7 +1,8 @@
-"use server"
 import { db } from "@/lib/db";
+import { NextResponse } from "next/server";
 
-export async function fetch_statistics() {
+export async function GET() {
+  try {
     const [total_equipment, status_counts, department_counts] = await Promise.all([
       db.equipment.count(),
       db.equipment.groupBy({
@@ -30,10 +31,16 @@ export async function fetch_statistics() {
       count: dc._count.id,
     }));
 
-    return {
-      total_equipment,
-      status_data,
-      department_data,
-    };
+    return NextResponse.json(
+      {
+        total_equipment,
+        status_data,
+        department_data,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Error fetching statistics:", error);
+    return NextResponse.json({ error: "Failed to fetch statistics" }, { status: 500 });
   }
-
+}

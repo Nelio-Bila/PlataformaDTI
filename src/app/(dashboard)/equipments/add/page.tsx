@@ -1,3 +1,4 @@
+// src/app/(dashboard)/equipments/add/page.tsx
 import { EquipmentForm } from "@/components/forms/equipment-form";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import type { Metadata } from "next";

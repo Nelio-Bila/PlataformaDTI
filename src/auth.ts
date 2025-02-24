@@ -2,8 +2,24 @@ import { SafeUserType } from "@/types";
 import NextAuth, { DefaultSession } from "next-auth";
 import { AdapterUser } from "next-auth/adapters";
 import Credentials from "next-auth/providers/credentials";
-import { login } from "./actions/auth-actions";
 import { authConfig } from "./auth.config";
+
+async function login(email: string, password: string) {
+  const response = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Credenciais inválidas");
+  }
+
+  const data = await response.json();
+  return data.user;
+}
+
 export const {
   auth,
   signIn,
@@ -15,17 +31,25 @@ export const {
     Credentials({
       name: "credentials",
       credentials: {
-        email: { label: "email", type: "text" },
-        password: { label: "password", type: "password" },
+        email: { label: "Email", type: "text" },
+        password: { label: "Senha", type: "password" },
       },
       async authorize(credentials) {
-        return login(credentials.email as string, credentials.password as string);
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Email e senha são obrigatórios");
+        }
+
+        try {
+          const user = await login(credentials.email as string, credentials.password as string);
+          return user;
+        } catch (error: any) {
+          throw new Error(error.message);
+        }
       },
     }),
   ],
   session: {
     strategy: "jwt",
-    // maxAge: 15 * 60, // 15 minutes in seconds (matching Django's ACCESS_TOKEN_LIFETIME)
   },
   callbacks: {
     async session({ session, token }) {
@@ -46,5 +70,5 @@ declare module "next-auth" {
     user: SafeUserType;
   }
 
-  interface User extends SafeUserType { }
+  interface User extends SafeUserType {}
 }
