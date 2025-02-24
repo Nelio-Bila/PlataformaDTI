@@ -597,7 +597,7 @@ export function EquipmentClient() {
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col md:flex-row items-center gap-2">
           <Button
             variant="outline"
             size="sm"
