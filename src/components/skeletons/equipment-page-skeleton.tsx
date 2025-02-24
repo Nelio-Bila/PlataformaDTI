@@ -1,16 +1,23 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 
 export default function EquipmentPageSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className="p-6 w-full space-y-6">
+      {/* Breadcrumbs */}
+      <div className="flex items-center space-x-2">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-4 w-4" />
+        <Skeleton className="h-4 w-24" />
+      </div>
+
       {/* Header */}
       <div className="flex justify-between items-center">
         <Skeleton className="h-8 w-48" />
@@ -21,22 +28,22 @@ export default function EquipmentPageSkeleton() {
       </div>
 
       {/* Filters and Actions */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <div className="flex flex-wrap gap-2 items-center">
-          <Skeleton className="h-10 w-64" /> {/* Search */}
-          <Skeleton className="h-10 w-44" /> {/* Type */}
-          <Skeleton className="h-10 w-44" /> {/* Status */}
-          <Skeleton className="h-10 w-44" /> {/* Direction */}
-          <Skeleton className="h-10 w-44" /> {/* Department */}
-        </div>
-        <div className="flex gap-2">
-          <Skeleton className="h-10 w-32" /> {/* Export */}
-          <Skeleton className="h-10 w-36" /> {/* Register */}
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+        <Skeleton className="h-10 w-full" /> {/* Search */}
+        <Skeleton className="h-10 w-full" /> {/* Columns Dropdown */}
+        <Skeleton className="h-10 w-full" /> {/* Export to Excel */}
+        <Skeleton className="h-10 w-full" /> {/* Register Equipment */}
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-5 md:grid-cols-5 gap-2">
+        <Skeleton className="h-10 w-full" /> {/* Type Filter */}
+        <Skeleton className="h-10 w-full" /> {/* Status Filter */}
+        <Skeleton className="h-10 w-full" /> {/* Direction Filter */}
+        <Skeleton className="h-10 w-full" /> {/* Department Filter */}
+        <Skeleton className="h-10 w-full" /> {/* Clear Filters */}
       </div>
 
       {/* Table */}
-      <div className="rounded-md border">
+      <div className="relative rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
