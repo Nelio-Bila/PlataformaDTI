@@ -1489,7 +1489,7 @@ export function EquipmentForm() {
               <p className="text-gray-600 dark:text-gray-200 text-center">
                 Arraste e solte imagens aqui ou clique para selecionar
               </p>
-              <div className="flex gap-2 mt-4">
+              <div className="flex flex-col-reverse md:flex-row gap-2 mt-4">
                 <Button variant="outline" asChild>
                   <label htmlFor="file-upload" className="cursor-pointer">
                     <Upload className="h-4 w-4 mr-2" />

@@ -18,9 +18,15 @@ async function main() {
         },
     });
 
-    const directionDiagnostico = await prisma.direction.create({
+    const directionCientificaPedagogica = await prisma.direction.create({
         data: {
-            name: "Diagnóstico e Terapêutica",
+            name: "Científica e Pedagógica",
+        },
+    });
+
+    const directionEnfermagem = await prisma.direction.create({
+        data: {
+            name: "Científica e Pedagógica",
         },
     });
 
@@ -34,14 +40,14 @@ async function main() {
 
     const deptMedicina = await prisma.department.create({
         data: {
-            name: "Medicina",
+            name: "Medicinas",
             direction_id: directionClinica.id,
         },
     });
 
     const deptFarmacia = await prisma.department.create({
         data: {
-            name: "Farmácia",
+            name: "Recursos Humanos",
             direction_id: directionAdmin.id,
         },
     });
@@ -49,14 +55,14 @@ async function main() {
     const deptLabClinico = await prisma.department.create({
         data: {
             name: "Laboratório de Análises Clínicas",
-            direction_id: directionDiagnostico.id,
+            direction_id: directionCientificaPedagogica.id,
         },
     });
 
     const deptAnatomiaPatologica = await prisma.department.create({
         data: {
             name: "Anatomia Patológica",
-            direction_id: directionDiagnostico.id,
+            direction_id: directionCientificaPedagogica.id,
         },
     });
 
@@ -99,7 +105,7 @@ async function main() {
 
     const serviceDistribuicao = await prisma.service.create({
         data: {
-            name: "Distribuição de Medicamentos",
+            name: "Depoosito de Medicamentos",
             department_id: deptFarmacia.id,
         },
     });
@@ -107,7 +113,7 @@ async function main() {
     // Seed Repartitions (Repartições)
     const reparticaoSalaOperacao1 = await prisma.repartition.create({
         data: {
-            name: "Sala de Operações 1",
+            name: "Sala de Operações",
             department_id: deptCirurgia.id,
         },
     });
@@ -170,7 +176,7 @@ async function main() {
             purchase_date: new Date("2021-01-20"),
             warranty_end: new Date("2023-01-20"),
             status: "ATIVO",
-            direction_id: directionDiagnostico.id,
+            direction_id: directionCientificaPedagogica.id,
             department_id: deptLabClinico.id,
             sector_id: sectorBioquimica.id,
             service_id: null,
