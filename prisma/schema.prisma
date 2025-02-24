@@ -121,6 +121,7 @@ model Direction {
   created_at  DateTime     @default(now())
   updated_at  DateTime     @updatedAt
   Equipment   Equipment[]
+  services    Service[]
 }
 
 model Department {
@@ -150,7 +151,9 @@ model Service {
   id            String      @id @default(uuid())
   name          String
   department_id String?
+  direction_id  String?
   department    Department? @relation(fields: [department_id], references: [id])
+  direction     Direction?  @relation(fields: [direction_id], references: [id])
   equipment     Equipment[]
   created_at    DateTime    @default(now())
   updated_at    DateTime    @updatedAt
