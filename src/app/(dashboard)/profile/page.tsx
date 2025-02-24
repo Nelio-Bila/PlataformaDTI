@@ -251,7 +251,7 @@ const ProfileUpdateModal: React.FC<{ user: SafeUserType; }> = ({ user }) => {
 const ProfilePage = () => {
   const { data: session, status } = useSession();
   // Fetch filter options
-  const { data, isLoading: isLoadingUser, error: userError } = useQuery({
+  const { data, isLoading: isLoadingUser } = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
       const response = await fetch(`/api/auth/profile/${session?.user?.id}`, {
