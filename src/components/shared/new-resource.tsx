@@ -22,14 +22,14 @@ export default function NewResource() {
         <DropdownMenuGroup>
 
 
-          <DropdownMenuItem>
+          <DropdownMenuItem asChild>
             <Link href="/equipments/add" className="flex flex-row">
               <Icons.computer className="mr-2 h-4 w-4" />
               <span>Equipamento</span>
             </Link>
           </DropdownMenuItem>
 
-          <DropdownMenuItem>
+          <DropdownMenuItem asChild>
             <Link href="/users/new" className="flex flex-row">
               <Icons.user className="mr-2 h-4 w-4" />
               <span>Utilizador</span>
