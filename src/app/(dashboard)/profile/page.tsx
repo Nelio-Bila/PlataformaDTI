@@ -117,6 +117,7 @@ const PasswordResetModal: React.FC<{ userId: string }> = ({ userId }) => {
       });
       setIsOpen(false);
     } catch (err) {
+      console.log(err)
       setError("Erro ao atualizar a senha");
     } finally {
       setIsLoading(false);
@@ -209,6 +210,7 @@ const ProfileUpdateModal: React.FC<{ user: SafeUserType; }> = ({ user }) => {
 
       setIsOpen(false);
     } catch (err) {
+      console.log(err)
       setError("Erro ao atualizar o perfil");
     } finally {
       setIsLoading(false);

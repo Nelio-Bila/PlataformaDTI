@@ -135,7 +135,7 @@ export function EquipmentForm() {
   }, [files]);
 
   // Fetch Directions
-  const { data: directions = [], isLoading: isDirectionsLoading, error: directionsError } = useQuery({
+  const { data: directions = [], isLoading: isDirectionsLoading} = useQuery({
     queryKey: ["directions"],
     queryFn: () => fetch("/api/equipment/directions").then(res => res.json()),
   });
@@ -191,6 +191,7 @@ export function EquipmentForm() {
         title: "Sucesso!",
         description: "Equipamento registrado com sucesso",
       });
+      console.log(data)
       router.push("/equipments");
     },
     onError: (error: Error) => {

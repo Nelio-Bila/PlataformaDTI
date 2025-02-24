@@ -76,6 +76,7 @@ const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({ user, onUserUpd
 
       setIsOpen(false);
     } catch (err) {
+      console.log(err)
       setError("Erro ao atualizar o perfil");
     } finally {
       setIsLoading(false);
