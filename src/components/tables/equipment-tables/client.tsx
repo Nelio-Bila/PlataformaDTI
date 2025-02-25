@@ -51,9 +51,10 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
-import { Columns, Edit, FilterX, MoreHorizontal, PackagePlus, RefreshCw, Sheet, Trash, Trash2, View } from "lucide-react";
+import { Columns, Edit, Eye, FilterX, MoreHorizontal, PackagePlus, RefreshCw, Sheet, Trash, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter as useTopLoaderRouter } from "nextjs-toploader/app";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 
@@ -61,6 +62,7 @@ const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
 export function EquipmentClient() {
   const router = useRouter();
+  const topLoadeRouter = useTopLoaderRouter();
   const searchParams = useSearchParams();
 
   const initialState = useMemo(
@@ -236,6 +238,18 @@ export function EquipmentClient() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Ações</DropdownMenuLabel>
+              <DropdownMenuItem className="flex flex-nowrap gap-2">
+                <Eye />
+                <Link href={`/equipments/${row.original.id}`}>Ver Detalhes</Link>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem>
+                <Link href={`/equipments/update/${row.original.id}`} className="flex flex-nowrap gap-2">
+                  <Edit />
+                  <span>Editar</span>
+                </Link>
+              </DropdownMenuItem>
+
               <DropdownMenuItem
                 onClick={() => {
                   setItemToDelete(row.original.id);
@@ -247,16 +261,7 @@ export function EquipmentClient() {
                 <span>Excluir</span>
 
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link href={`/equipments/update/${row.original.id}`} className="flex flex-nowrap gap-2">
-                  <Edit />
-                  <span>Editar</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex flex-nowrap gap-2">
-                <View />
-                <Link href={`/equipments/${row.original.id}`}>Ver Detalhes</Link>
-              </DropdownMenuItem>
+
             </DropdownMenuContent>
           </DropdownMenu>
         ),
@@ -576,7 +581,7 @@ export function EquipmentClient() {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"} className="cursor:pointer">
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="whitespace-nowrap">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}

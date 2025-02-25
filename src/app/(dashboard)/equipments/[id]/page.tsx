@@ -127,7 +127,7 @@ export default function EquipmentDetails() {
                         </div>
                     </dl>
                     <Button asChild className="mt-6">
-                        <Link href={`/equipments/edit/${equipment.id}`}>
+                        <Link href={`/equipments/update/${equipment.id}`}>
                             <Edit className="h-4 w-4 mr-2" />
                             Editar Equipamento
                         </Link>
