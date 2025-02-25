@@ -125,6 +125,12 @@ export default function EquipmentDetails() {
                                 {new Date(equipment.created_at).toLocaleDateString("pt-BR")}
                             </dd>
                         </div>
+                        <div>
+                            <dt className="text-sm font-medium text-gray-500">Registado por</dt>
+                            <dd className="mt-1 text-lg text-gray-900 dark:text-gray-200">
+                                {equipment.registeredBy?.name || "N/D"}
+                            </dd>
+                        </div>
                     </dl>
                     <Button asChild className="mt-6">
                         <Link href={`/equipments/update/${equipment.id}`}>

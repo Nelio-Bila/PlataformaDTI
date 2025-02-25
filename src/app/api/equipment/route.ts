@@ -29,6 +29,7 @@ export async function GET(request: Request) {
           service: true,
           repartition: true,
           images: true,
+          registeredBy: true,
         },
       });
       if (!equipment) {
