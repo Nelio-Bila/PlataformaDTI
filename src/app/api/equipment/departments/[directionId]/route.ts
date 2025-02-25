@@ -1,15 +1,10 @@
 // src/app/api/equipment/departments/[directionId]/route.ts
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
-import { NextRequest } from "next/server"; // Import NextRequest
+import { NextRequest, NextResponse } from "next/server";
 
-// Define the params interface
-interface Params {
-  directionId: string;
-}
 
-export async function GET(req: NextRequest, { params }: { params: Params }) {
-  const { directionId } = params; // Destructure directly from params
+export async function GET(req: NextRequest, { params } : { params: Promise<{ directionId: string }> }) {
+  const { directionId } = await params;
 
   try {
     if (!directionId) return NextResponse.json([], { status: 200 });
