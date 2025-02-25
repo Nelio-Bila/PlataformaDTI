@@ -59,8 +59,9 @@ export async function GET(
 
 export async function PUT(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const {id} = await params;
     try {
         const formData = await req.formData();
         const data = {
@@ -86,7 +87,7 @@ export async function PUT(
 
         // Check if equipment exists
         const existingEquipment = await db.equipment.findUnique({
-            where: { id: params.id },
+            where: { id: id },
             include: { images: true },
         });
 
@@ -166,7 +167,7 @@ export async function PUT(
 
         // Update equipment with new data
         const equipment = await db.equipment.update({
-            where: { id: params.id },
+            where: { id: id },
             data: {
                 serial_number: validatedData.serial_number,
                 type: validatedData.type,
@@ -205,12 +206,13 @@ export async function PUT(
 
 export async function DELETE(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }>}
 ) {
+    const {id} = await params;
     try {
         // Find equipment with images
         const equipment = await db.equipment.findUnique({
-            where: { id: params.id },
+            where: { id: id },
             include: { images: true },
         });
 
@@ -238,7 +240,7 @@ export async function DELETE(
 
         // Delete equipment and related images
         await db.equipment.delete({
-            where: { id: params.id },
+            where: { id: id },
         });
 
         return NextResponse.json({ success: true }, { status: 200 });
