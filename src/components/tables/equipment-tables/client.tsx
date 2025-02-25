@@ -54,7 +54,6 @@ import {
 import { Columns, Edit, Eye, FilterX, MoreHorizontal, PackagePlus, RefreshCw, Sheet, Trash, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useRouter as useTopLoaderRouter } from "nextjs-toploader/app";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import * as XLSX from "xlsx";
 
@@ -62,7 +61,6 @@ const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
 export function EquipmentClient() {
   const router = useRouter();
-  const topLoadeRouter = useTopLoaderRouter();
   const searchParams = useSearchParams();
 
   const initialState = useMemo(
