@@ -1,8 +1,9 @@
 // src/app/api/equipment/departments/[directionId]/route.ts
 import { db } from "@/lib/db";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { NextRequest } from "next/server"; // Import NextRequest
 
-// Define the params type explicitly
+// Define the params interface
 interface Params {
   directionId: string;
 }

@@ -741,10 +741,12 @@ export function EquipmentUpdateForm({ equipmentId }: EquipmentUpdateFormProps) {
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                 {files.map((file, index) => (
                                     <div key={index} className="relative bg-white dark:bg-gray-950 p-2 rounded-lg shadow">
-                                        <img
+                                        <Image
                                             src={URL.createObjectURL(file)}
                                             alt={file.name}
                                             className="w-full h-32 object-cover rounded"
+                                            width={128}
+                                            height={128}
                                         />
                                         <p className="text-sm text-gray-600 truncate mt-1">{file.name}</p>
                                         <Button
