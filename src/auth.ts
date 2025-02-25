@@ -1,24 +1,25 @@
+import { login } from "@/actions/auth-actions";
 import { SafeUserType } from "@/types";
 import NextAuth, { DefaultSession } from "next-auth";
 import { AdapterUser } from "next-auth/adapters";
 import Credentials from "next-auth/providers/credentials";
 import { authConfig } from "./auth.config";
 
-async function login(email: string, password: string) {
-  const response = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
+// async function login(email: string, password: string) {
+//   const response = await fetch("/api/auth/login", {
+//     method: "POST",
+//     headers: { "Content-Type": "application/json" },
+//     body: JSON.stringify({ email, password }),
+//   });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Credenciais inválidas");
-  }
+//   if (!response.ok) {
+//     const error = await response.json();
+//     throw new Error(error.error || "Credenciais inválidas");
+//   }
 
-  const data = await response.json();
-  return data.user;
-}
+//   const data = await response.json();
+//   return data.user;
+// }
 
 export const {
   auth,
@@ -43,7 +44,8 @@ export const {
           const user = await login(credentials.email as string, credentials.password as string);
           return user;
         } catch (error: any) {
-          throw new Error(error.message);
+          console.log(error)
+          return null
         }
       },
     }),
