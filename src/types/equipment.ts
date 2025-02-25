@@ -1,3 +1,5 @@
+import { User } from "@prisma/client";
+
 // Type for equipment data
 export interface Equipment {
     id: string;
@@ -16,6 +18,7 @@ export interface Equipment {
     created_at: string; // ISO string or Date
     updated_at: string; // ISO string or Date
     images: EquipmentImage[];
+    registeredBy: User;
     direction?: { name: string; id: string; created_at: Date; updated_at: Date } | null;
     department?: { name: string; id: string; created_at: Date; updated_at: Date; direction_id: string } | null;
     sector?: { name: string; id: string; created_at: Date; updated_at: Date; department_id: string } | null;
