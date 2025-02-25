@@ -1,8 +1,8 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
-export async function GET(req: Request, { params }: { params: { departmentId: string } }) {
-  const  departmentId  = (await params).departmentId;
+export async function GET(req: Request, { params }: { params: Promise<{ departmentId: string }>}) {
+  const  {departmentId}  = await params;
 
   try {
     if (!departmentId) return NextResponse.json([], { status: 200 });
