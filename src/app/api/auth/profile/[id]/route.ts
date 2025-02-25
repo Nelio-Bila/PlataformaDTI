@@ -6,7 +6,6 @@ import { z } from "zod";
 export async function GET(request: NextRequest,{ params }: { params: Promise<{ id: string }> }) {
   try {
     const id = (await params).id
-    console.log('id',id)
 
     // Get user and return the data
     const user = await db.user.findUnique({

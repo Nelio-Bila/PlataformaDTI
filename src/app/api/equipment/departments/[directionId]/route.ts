@@ -1,8 +1,15 @@
+// src/app/api/equipment/departments/[directionId]/route.ts
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(req: Request, { params }: { params: { directionId: string } }) {
-  const { directionId } = params;
+// Define the params type explicitly
+interface Params {
+  directionId: string;
+}
+
+export async function GET(req: NextRequest, { params }: { params: Params }) {
+  const { directionId } = params; // Destructure directly from params
+
   try {
     if (!directionId) return NextResponse.json([], { status: 200 });
     const departments = await db.department.findMany({

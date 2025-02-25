@@ -248,7 +248,7 @@ export function EquipmentClient() {
 
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Link href={`/equipments/edit/${row.original.id}`} className="flex flex-nowrap gap-2">
+                <Link href={`/equipments/update/${row.original.id}`} className="flex flex-nowrap gap-2">
                   <Edit />
                   <span>Editar</span>
                 </Link>

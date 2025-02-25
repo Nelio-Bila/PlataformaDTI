@@ -2,7 +2,8 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET(req: Request, { params }: { params: { departmentId: string } }) {
-  const { departmentId } = params;
+  const  departmentId  = (await params).departmentId;
+
   try {
     if (!departmentId) return NextResponse.json([], { status: 200 });
     const repartitions = await db.repartition.findMany({

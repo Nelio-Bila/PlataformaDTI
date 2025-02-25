@@ -1,4 +1,4 @@
-// src/app/api/equipment/create/route.ts
+// src/app/api/equipment/update/[id]/route.ts
 import { db } from "@/lib/db";
 import { v2 as cloudinary } from "cloudinary";
 import { NextResponse } from "next/server";
@@ -19,11 +19,47 @@ const equipment_schema = z.object({
     sector_id: z.string().optional(),
     service_id: z.string().optional(),
     repartition_id: z.string().optional(),
+    deleted_image_ids: z.array(z.string()).optional(),
 });
 
+export async function GET(
+    req: Request,
+    { params }: { params: { id: string } }
+) {
+    try {
+        const equipment = await db.equipment.findUnique({
+            where: { id: params.id },
+            include: {
+                images: true,
+                direction: true,
+                department: true,
+                sector: true,
+                service: true,
+                repartition: true,
+            },
+        });
 
+        if (!equipment) {
+            return NextResponse.json(
+                { success: false, error: "Equipment not found" },
+                { status: 404 }
+            );
+        }
 
-export async function POST(req: Request) {
+        return NextResponse.json({ success: true, equipment });
+    } catch (error) {
+        console.error("Error fetching equipment:", error);
+        return NextResponse.json(
+            { success: false, error: "Failed to fetch equipment" },
+            { status: 500 }
+        );
+    }
+}
+
+export async function PUT(
+    req: Request,
+    { params }: { params: { id: string } }
+) {
     try {
         const formData = await req.formData();
         const data = {
@@ -39,14 +75,61 @@ export async function POST(req: Request) {
             sector_id: formData.get("sector_id") as string | undefined,
             service_id: formData.get("service_id") as string | undefined,
             repartition_id: formData.get("repartition_id") as string | undefined,
+            deleted_image_ids: formData.get("deleted_image_ids")
+                ? JSON.parse(formData.get("deleted_image_ids") as string)
+                : [],
         };
 
         const validatedData = equipment_schema.parse(data);
         const imageFiles = formData.getAll("images") as File[];
 
+        // Check if equipment exists
+        const existingEquipment = await db.equipment.findUnique({
+            where: { id: params.id },
+            include: { images: true },
+        });
+
+        if (!existingEquipment) {
+            return NextResponse.json(
+                { success: false, error: "Equipment not found" },
+                { status: 404 }
+            );
+        }
+
+        // Handle deleted images
+        if (validatedData.deleted_image_ids && validatedData.deleted_image_ids.length > 0) {
+            // Find images to delete
+            const imagesToDelete = existingEquipment.images.filter(img =>
+                validatedData.deleted_image_ids?.includes(img.id)
+            );
+
+            // Delete from Cloudinary
+            for (const image of imagesToDelete) {
+                if (image.cloudinary_public_id) {
+                    cloudinary.config({
+                        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+                        api_key: process.env.CLOUDINARY_API_KEY,
+                        api_secret: process.env.CLOUDINARY_API_SECRET,
+                    });
+
+                    await cloudinary.uploader.destroy(image.cloudinary_public_id);
+                }
+            }
+
+            // Delete from database
+            await db.equipmentImage.deleteMany({
+                where: {
+                    id: {
+                        in: validatedData.deleted_image_ids
+                    }
+                }
+            });
+        }
+
+        // Upload new images
         let uploadedImages: { url: string; public_id: string }[] = [];
 
-        if (imageFiles && imageFiles.length > 0) {
+        if (imageFiles && imageFiles.length > 0 && imageFiles[0].size > 0) {
             const uploadPromises = imageFiles.map(async (file) => {
                 const arrayBuffer = await file.arrayBuffer();
                 const buffer = Buffer.from(arrayBuffer);
@@ -80,7 +163,9 @@ export async function POST(req: Request) {
             uploadedImages = await Promise.all(uploadPromises);
         }
 
-        const equipment = await db.equipment.create({
+        // Update equipment with new data
+        const equipment = await db.equipment.update({
+            where: { id: params.id },
             data: {
                 serial_number: validatedData.serial_number,
                 type: validatedData.type,
@@ -107,12 +192,60 @@ export async function POST(req: Request) {
             include: { images: true },
         });
 
-        return NextResponse.json({ success: true, equipment }, { status: 201 });
+        return NextResponse.json({ success: true, equipment }, { status: 200 });
     } catch (error) {
         if (error instanceof z.ZodError) {
             return NextResponse.json({ success: false, error: error.errors[0].message }, { status: 400 });
         }
-        console.error("Error creating equipment:", error);
-        return NextResponse.json({ success: false, error: "Failed to create equipment" }, { status: 500 });
+        console.error("Error updating equipment:", error);
+        return NextResponse.json({ success: false, error: "Failed to update equipment" }, { status: 500 });
+    }
+}
+
+export async function DELETE(
+    req: Request,
+    { params }: { params: { id: string } }
+) {
+    try {
+        // Find equipment with images
+        const equipment = await db.equipment.findUnique({
+            where: { id: params.id },
+            include: { images: true },
+        });
+
+        if (!equipment) {
+            return NextResponse.json(
+                { success: false, error: "Equipment not found" },
+                { status: 404 }
+            );
+        }
+
+        // Delete images from Cloudinary
+        if (equipment.images.length > 0) {
+            cloudinary.config({
+                cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+                api_key: process.env.CLOUDINARY_API_KEY,
+                api_secret: process.env.CLOUDINARY_API_SECRET,
+            });
+
+            for (const image of equipment.images) {
+                if (image.cloudinary_public_id) {
+                    await cloudinary.uploader.destroy(image.cloudinary_public_id);
+                }
+            }
+        }
+
+        // Delete equipment and related images
+        await db.equipment.delete({
+            where: { id: params.id },
+        });
+
+        return NextResponse.json({ success: true }, { status: 200 });
+    } catch (error) {
+        console.error("Error deleting equipment:", error);
+        return NextResponse.json(
+            { success: false, error: "Failed to delete equipment" },
+            { status: 500 }
+        );
     }
 }
