@@ -27,6 +27,7 @@ import {
   PackagePlus,
   Pizza,
   Plus,
+  Send,
   Settings,
   SunMedium,
   Trash,
@@ -34,13 +35,16 @@ import {
   User,
   User2Icon,
   UserX2Icon,
-  X
+  X,
+  FileTextIcon
 } from "lucide-react";
 import { JSX, SVGProps } from "react";
 
 export type Icon = LucideIcon;
 
 export const Icons = {
+  fileText: FileTextIcon,
+  send: Send,
   dashboard: LayoutDashboardIcon,
   logo: Command,
   login: LogIn,

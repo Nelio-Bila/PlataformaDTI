@@ -54,18 +54,20 @@ model VerificationToken {
 
 // User model updated for NextAuth and groups
 model User {
-  id            String      @id @default(uuid())
-  name          String?
-  email         String?     @unique
-  emailVerified DateTime?   @map("email_verified")
-  image         String?
-  password      String? // Optional for credential auth; null for OAuth
-  created_at    DateTime    @default(now())
-  updated_at    DateTime    @updatedAt
-  accounts      Account[]
-  sessions      Session[]
-  groups        UserGroup[] // Many-to-many with Group
-  Equipment     Equipment[]
+  id               String      @id @default(uuid())
+  name             String?
+  email            String?     @unique
+  emailVerified    DateTime?   @map("email_verified")
+  image            String?
+  password         String? // Optional for credential auth; null for OAuth
+  created_at       DateTime    @default(now())
+  updated_at       DateTime    @updatedAt
+  accounts         Account[]
+  sessions         Session[]
+  groups           UserGroup[] // Many-to-many with Group
+  Equipment        Equipment[]
+  requestsMade     Request[]   @relation(name: "RequestsMade") // Requests this user has made
+  requestsApproved Request[]   @relation(name: "RequestsApproved") // Requests this user has approved
 
   @@map("users")
 }
@@ -114,7 +116,6 @@ model GroupPermission {
   @@id([group_id, permission_id])
   @@map("group_permissions")
 }
-
 model Direction {
   id          String       @id @default(uuid())
   name        String
@@ -123,33 +124,23 @@ model Direction {
   updated_at  DateTime     @updatedAt
   Equipment   Equipment[]
   services    Service[]
+  requester_requests   Request[]  @relation(name: "RequesterDirection")
+  destination_requests Request[]  @relation(name: "DestinationDirection")
 }
 
 model Department {
-  id           String        @id @default(uuid())
-  name         String
-  direction_id String
-  direction    Direction     @relation(fields: [direction_id], references: [id])
-  sectors      Sector[]
-  repartitions Repartition[]
-  services     Service[]
-  equipment    Equipment[]
-  created_at   DateTime      @default(now())
-  updated_at   DateTime      @updatedAt
-}
-
-model Sector {
-  id            String      @id @default(uuid())
+  id            String        @id @default(uuid())
   name          String
-  department_id String? // Optional relationship with Department
-  service_id    String? // Optional relationship with Service
-  department    Department? @relation(fields: [department_id], references: [id])
-  service       Service?    @relation(fields: [service_id], references: [id])
+  direction_id  String
+  direction     Direction     @relation(fields: [direction_id], references: [id])
+  sectors       Sector[]
+  repartitions  Repartition[]
+  services      Service[]
   equipment     Equipment[]
-  created_at    DateTime    @default(now())
-  updated_at    DateTime    @updatedAt
-
-  @@unique([department_id, service_id]) // Ensure a sector can't belong to both a department and a service simultaneously
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+  requester_requests   Request[]  @relation(name: "RequesterDepartment")
+  destination_requests Request[]  @relation(name: "DestinationDepartment")
 }
 
 model Service {
@@ -163,6 +154,24 @@ model Service {
   created_at    DateTime    @default(now())
   updated_at    DateTime    @updatedAt
   Sector        Sector[]
+  requester_requests   Request[]  @relation(name: "RequesterService")
+  destination_requests Request[]  @relation(name: "DestinationService")
+}
+
+model Sector {
+  id            String      @id @default(uuid())
+  name          String
+  department_id String?     // Optional relationship with Department
+  service_id    String?     // Optional relationship with Service
+  department    Department? @relation(fields: [department_id], references: [id])
+  service       Service?    @relation(fields: [service_id], references: [id])
+  equipment     Equipment[]
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+  requester_requests   Request[]  @relation(name: "RequesterSector")
+  destination_requests Request[]  @relation(name: "DestinationSector")
+
+  @@unique([department_id, service_id]) // Ensure a sector can't belong to both a department and a service simultaneously
 }
 
 model Repartition {
@@ -173,6 +182,8 @@ model Repartition {
   equipment     Equipment[]
   created_at    DateTime    @default(now())
   updated_at    DateTime    @updatedAt
+  requester_requests   Request[]  @relation(name: "RequesterRepartition")
+  destination_requests Request[]  @relation(name: "DestinationRepartition")
 }
 
 model Equipment {
@@ -211,4 +222,77 @@ model EquipmentImage {
   equipment            Equipment @relation(fields: [equipment_id], references: [id], onDelete: Cascade)
 
   @@map("equipment_images")
+}
+
+
+
+// Enum for Request Status
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+// Enum for Request Type (e.g., requisition, return, or substitution)
+enum RequestType {
+  REQUISITION
+  RETURN
+  SUBSTITUTION
+}
+
+// Request model to track service/product requests
+model Request {
+  id                    String        @id @default(uuid())
+  request_number        String        @unique // e.g., "000124" from the form
+  type                  RequestType   // REQUISITION, RETURN, SUBSTITUTION
+  status                RequestStatus @default(PENDING)
+  requester_id          String?       // Optional: Not required if unauthenticated
+  requester_name        String?       // Store the name of the requester if unauthenticated
+  requester             User?         @relation(name: "RequestsMade", fields: [requester_id], references: [id], onDelete: Cascade)
+
+  // Requester's organizational units
+  requester_direction_id   String?
+  requester_department_id  String?
+  requester_service_id     String?
+  requester_sector_id      String?
+  requester_repartition_id String?
+  requester_direction      Direction?    @relation(name: "RequesterDirection", fields: [requester_direction_id], references: [id])
+  requester_department     Department?   @relation(name: "RequesterDepartment", fields: [requester_department_id], references: [id])
+  requester_service        Service?      @relation(name: "RequesterService", fields: [requester_service_id], references: [id])
+  requester_sector         Sector?       @relation(name: "RequesterSector", fields: [requester_sector_id], references: [id])
+  requester_repartition    Repartition?  @relation(name: "RequesterRepartition", fields: [requester_repartition_id], references: [id])
+
+  // Destination organizational units
+  destination_direction_id   String?
+  destination_department_id  String?
+  destination_service_id     String?
+  destination_sector_id      String?
+  destination_repartition_id String?
+  destination_direction      Direction?    @relation(name: "DestinationDirection", fields: [destination_direction_id], references: [id])
+  destination_department     Department?   @relation(name: "DestinationDepartment", fields: [destination_department_id], references: [id])
+  destination_service        Service?      @relation(name: "DestinationService", fields: [destination_service_id], references: [id])
+  destination_sector         Sector?       @relation(name: "DestinationSector", fields: [destination_sector_id], references: [id])
+  destination_repartition    Repartition?  @relation(name: "DestinationRepartition", fields: [destination_repartition_id], references: [id])
+
+  items                 RequestItem[] // One request can have multiple items
+  created_at            DateTime      @default(now())
+  updated_at            DateTime      @updatedAt
+  approved_by           String?       // Optional field for the approver's user ID
+  approver              User?         @relation(name: "RequestsApproved", fields: [approved_by], references: [id])
+  comments              String?       @db.Text // For any additional notes
+}
+
+// RequestItem model to handle individual items in a request
+model RequestItem {
+  id            String    @id @default(uuid())
+  request_id    String
+  request       Request   @relation(fields: [request_id], references: [id], onDelete: Cascade)
+  description   String    // e.g., "Pedidos de Reparos de PC Computador"
+  quantity      Int       // e.g., "1 UM" (1 unit)
+  unit          String?   // e.g., "UM" (unit of measure)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
 }

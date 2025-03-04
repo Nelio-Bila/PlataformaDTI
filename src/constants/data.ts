@@ -13,4 +13,10 @@ export const navItems: NavItem[] = [
     icon: "computer",
     label: "Equipamentos",
   },
+  {
+    title: "Gestão de requisições",
+    href: "/requests",
+    icon: "fileText",
+    label: "Requisições",
+  },
 ];

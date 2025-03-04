@@ -5,22 +5,6 @@ import { AdapterUser } from "next-auth/adapters";
 import Credentials from "next-auth/providers/credentials";
 import { authConfig } from "./auth.config";
 
-// async function login(email: string, password: string) {
-//   const response = await fetch("/api/auth/login", {
-//     method: "POST",
-//     headers: { "Content-Type": "application/json" },
-//     body: JSON.stringify({ email, password }),
-//   });
-
-//   if (!response.ok) {
-//     const error = await response.json();
-//     throw new Error(error.error || "Credenciais inválidas");
-//   }
-
-//   const data = await response.json();
-//   return data.user;
-// }
-
 export const {
   auth,
   signIn,
