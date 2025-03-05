@@ -1,97 +1,170 @@
+// // src/app/api/requests/create/route.ts
+// import { auth } from "@/auth";
+// import { db } from "@/lib/db";
+// import { NextResponse } from "next/server";
+
+// // Define the RequestType enum (this should match your Prisma schema)
+// type RequestType = "REQUISITION" | "RETURN" | "SUBSTITUTION";
+
+// export async function POST(request: Request) {
+//   const session = await auth();
+//   if (!session?.user?.id) {
+//     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+//   }
+
+//   const formData = await request.formData();
+//   const type = formData.get("type") as string;
+//   const requester_name = formData.get("requester_name") as string;
+//   const itemsJson = formData.get("items") as string;
+
+//   // Parse the items JSON
+//   const items = JSON.parse(itemsJson) as Array<{ description: string; quantity: number; unit?: string }>;
+
+//   // Validate required fields
+//   if (!type || !requester_name || !items || items.length === 0) {
+//     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+//   }
+
+//   // Validate the type field against the RequestType enum
+//   const validTypes: RequestType[] = ["REQUISITION", "RETURN", "SUBSTITUTION"];
+//   if (!validTypes.includes(type as RequestType)) {
+//     return NextResponse.json(
+//       { error: "Invalid request type. Must be one of: REQUISITION, RETURN, SUBSTITUTION." },
+//       { status: 400 }
+//     );
+//   }
+
+//   try {
+//     // Generate a unique request_number
+//     const requestCount = await db.request.count();
+//     const request_number = `REQ-${String(requestCount + 1).padStart(6, "0")}`; // e.g., REQ-000001, REQ-000002
+
+//     // Create the request with associated items
+//     const newRequest = await db.request.create({
+//       data: {
+//         request_number, // Add the generated request_number
+//         type: type as RequestType,
+//         requester_name,
+//         requester_id: session.user.id,
+//         items: {
+//           create: items.map((item) => ({
+//             description: item.description,
+//             quantity: item.quantity,
+//             unit: item.unit,
+//           })),
+//         },
+//         requester_direction_id: formData.get("requester_direction_id") as string | undefined,
+//         requester_department_id: formData.get("requester_department_id") as string | undefined,
+//         requester_service_id: formData.get("requester_service_id") as string | undefined,
+//         requester_sector_id: formData.get("requester_sector_id") as string | undefined,
+//         requester_repartition_id: formData.get("requester_repartition_id") as string | undefined,
+//         destination_direction_id: formData.get("destination_direction_id") as string | undefined,
+//         destination_department_id: formData.get("destination_department_id") as string | undefined,
+//         destination_service_id: formData.get("destination_service_id") as string | undefined,
+//         destination_sector_id: formData.get("destination_sector_id") as string | undefined,
+//         destination_repartition_id: formData.get("destination_repartition_id") as string | undefined,
+//       },
+//       include: {
+//         items: true,
+//       },
+//     });
+
+//     return NextResponse.json(newRequest, { status: 201 });
+//   } catch (error) {
+//     console.error("Error creating request:", error);
+//     return NextResponse.json({ error: "Failed to create request" }, { status: 500 });
+//   }
+// }
+
+
+
+
+
 // src/app/api/requests/create/route.ts
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { Prisma } from "@prisma/client";
+import { NotificationService } from "@/lib/notifications";
 import { NextResponse } from "next/server";
-import { z } from "zod";
 
-const requestSchema = z.object({
-  type: z.enum(["REQUISITION", "RETURN", "SUBSTITUTION"], { required_error: "Tipo é obrigatório" }),
-  requester_name: z.string().min(1, { message: "Nome do solicitante é obrigatório" }),
-  description: z.string().min(1, { message: "Descrição é obrigatória" }),
-  quantity: z.number().min(1, { message: "Quantidade deve ser pelo menos 1" }),
-  unit: z.string().optional(),
-  requester_direction_id: z.string().optional(),
-  requester_department_id: z.string().optional(),
-  requester_service_id: z.string().optional(),
-  requester_sector_id: z.string().optional(),
-  requester_repartition_id: z.string().optional(),
-  destination_direction_id: z.string().optional(),
-  destination_department_id: z.string().optional(),
-  destination_service_id: z.string().optional(),
-  destination_sector_id: z.string().optional(),
-  destination_repartition_id: z.string().optional(),
-});
+type RequestType = "REQUISITION" | "RETURN" | "SUBSTITUTION";
 
-export async function POST(req: Request) {
+export async function POST(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const formData = await request.formData();
+  const type = formData.get("type") as string;
+  const requester_name = formData.get("requester_name") as string;
+  const itemsJson = formData.get("items") as string;
+
+  const items = JSON.parse(itemsJson) as Array<{ description: string; quantity: number; unit?: string }>;
+
+  if (!type || !requester_name || !items || items.length === 0) {
+    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+  }
+
+  const validTypes: RequestType[] = ["REQUISITION", "RETURN", "SUBSTITUTION"];
+  if (!validTypes.includes(type as RequestType)) {
+    return NextResponse.json(
+      { error: "Invalid request type. Must be one of: REQUISITION, RETURN, SUBSTITUTION." },
+      { status: 400 }
+    );
+  }
+
   try {
-    const session = await auth();
-    const userId = session?.user?.id;
-
-    const formData = await req.formData();
-    const data = {
-      type: formData.get("type") as string,
-      requester_name: formData.get("requester_name") as string,
-      description: formData.get("description") as string,
-      quantity: parseInt(formData.get("quantity") as string),
-      unit: formData.get("unit") as string | undefined,
-      requester_direction_id: formData.get("requester_direction_id") as string | undefined,
-      requester_department_id: formData.get("requester_department_id") as string | undefined,
-      requester_service_id: formData.get("requester_service_id") as string | undefined,
-      requester_sector_id: formData.get("requester_sector_id") as string | undefined,
-      requester_repartition_id: formData.get("requester_repartition_id") as string | undefined,
-      destination_direction_id: formData.get("destination_direction_id") as string | undefined,
-      destination_department_id: formData.get("destination_department_id") as string | undefined,
-      destination_service_id: formData.get("destination_service_id") as string | undefined,
-      destination_sector_id: formData.get("destination_sector_id") as string | undefined,
-      destination_repartition_id: formData.get("destination_repartition_id") as string | undefined,
-    };
-
-    const validatedData = requestSchema.parse(data);
-
-    // Generate a unique request number
     const requestCount = await db.request.count();
-    const requestNumber = `REQ${(requestCount + 1).toString().padStart(6, "0")}`;
+    const request_number = `REQ-${String(requestCount + 1).padStart(6, "0")}`;
 
-    const request = await db.request.create({
+    const newRequest = await db.request.create({
       data: {
-        request_number: requestNumber,
-        type: validatedData.type,
-        requester_id: userId || null, // Set to null if not authenticated
-        requester_name: validatedData.requester_name,
-        requester_direction_id: validatedData.requester_direction_id || null,
-        requester_department_id: validatedData.requester_department_id || null,
-        requester_service_id: validatedData.requester_service_id || null,
-        requester_sector_id: validatedData.requester_sector_id || null,
-        requester_repartition_id: validatedData.requester_repartition_id || null,
-        destination_direction_id: validatedData.destination_direction_id || null,
-        destination_department_id: validatedData.destination_department_id || null,
-        destination_service_id: validatedData.destination_service_id || null,
-        destination_sector_id: validatedData.destination_sector_id || null,
-        destination_repartition_id: validatedData.destination_repartition_id || null,
+        request_number,
+        type: type as RequestType,
+        requester_name,
+        requester_id: session.user.id,
         items: {
-          create: [
-            {
-              description: validatedData.description,
-              quantity: validatedData.quantity,
-              unit: validatedData.unit || "UM",
-            },
-          ],
+          create: items.map((item) => ({
+            description: item.description,
+            quantity: item.quantity,
+            unit: item.unit,
+          })),
         },
+        requester_direction_id: formData.get("requester_direction_id") as string | undefined,
+        requester_department_id: formData.get("requester_department_id") as string | undefined,
+        requester_service_id: formData.get("requester_service_id") as string | undefined,
+        requester_sector_id: formData.get("requester_sector_id") as string | undefined,
+        requester_repartition_id: formData.get("requester_repartition_id") as string | undefined,
+        destination_direction_id: formData.get("destination_direction_id") as string | undefined,
+        destination_department_id: formData.get("destination_department_id") as string | undefined,
+        destination_service_id: formData.get("destination_service_id") as string | undefined,
+        destination_sector_id: formData.get("destination_sector_id") as string | undefined,
+        destination_repartition_id: formData.get("destination_repartition_id") as string | undefined,
       },
-      include: { items: true },
+      include: {
+        items: true,
+      },
     });
 
-    return NextResponse.json({ success: true, request }, { status: 201 });
+    // Notify the approver (assuming approver group is "Approvers")
+    const approverGroup = await db.group.findFirst({ where: { name: "Approvers" } });
+    if (approverGroup) {
+      await NotificationService.createNotification({
+        type: "RequestCreated",
+        notifiableId: approverGroup.id,
+        notifiableType: "Group",
+        data: {
+          requestId: newRequest.id,
+          requestNumber: newRequest.request_number,
+          requesterName: requester_name,
+          message: `A new ${type.toLowerCase()} request (${request_number}) requires your approval.`,
+        },
+      });
+    }
+
+    return NextResponse.json(newRequest, { status: 201 });
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ success: false, error: error.errors[0].message }, { status: 400 });
-    }
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      console.error("Prisma error:", error.message, error.code, error.meta);
-      return NextResponse.json({ success: false, error: "Erro no banco de dados." }, { status: 500 });
-    }
-    console.error("Error creating request:", error instanceof Error ? error.message : "Unknown error");
-    return NextResponse.json({ success: false, error: "Falha ao criar requisição." }, { status: 500 });
+    console.error("Error creating request:", error);
+    return NextResponse.json({ error: "Failed to create request" }, { status: 500 });
   }
 }

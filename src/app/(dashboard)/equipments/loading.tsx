@@ -1,8 +1,12 @@
-import React from 'react'
-import EquipmentPageSkeleton from '@/components/skeletons/equipment-page-skeleton'
+import PageContainer from '@/components/layout/page-container'
+import EquipmentClientSkeleton from '@/components/skeletons/equipment-client-skeleton'
 
 export default function EquipmentPageLoading() {
     return (
-        <EquipmentPageSkeleton />
+        <PageContainer>
+            <div className="p-6 w-full">
+                <EquipmentClientSkeleton />
+            </div>
+        </PageContainer>
     )
 }

@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,7 +10,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// NextAuth models
+// NextAuth models (unchanged)
 model Account {
   id                String  @id @default(uuid())
   userId            String  @map("user_id")
@@ -52,43 +49,43 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-// User model updated for NextAuth and groups
+// User model - Removed owned entities, kept registeredBy
 model User {
   id               String      @id @default(uuid())
   name             String?
   email            String?     @unique
   emailVerified    DateTime?   @map("email_verified")
   image            String?
-  password         String? // Optional for credential auth; null for OAuth
+  password         String?
   created_at       DateTime    @default(now())
   updated_at       DateTime    @updatedAt
   accounts         Account[]
   sessions         Session[]
-  groups           UserGroup[] // Many-to-many with Group
-  Equipment        Equipment[]
-  requestsMade     Request[]   @relation(name: "RequestsMade") // Requests this user has made
-  requestsApproved Request[]   @relation(name: "RequestsApproved") // Requests this user has approved
+  groups           UserGroup[]
+  Equipment        Equipment[] @relation("EquipmentRegisteredBy")
+  requestsMade     Request[]   @relation(name: "RequestsMade")
+  requestsApproved Request[]   @relation(name: "RequestsApproved")
 
   @@map("users")
 }
 
-// Group model for role-based access
+// Group model - No owner
 model Group {
   id          String            @id @default(uuid())
-  name        String            @unique // e.g., "Admins", "Technicians"
+  name        String            @unique
   description String?
-  users       UserGroup[] // Many-to-many with User
-  permissions GroupPermission[] // Many-to-many with Permission
+  users       UserGroup[]
+  permissions GroupPermission[]
   created_at  DateTime          @default(now())
   updated_at  DateTime          @updatedAt
 }
 
-// Permission model for specific access rights
+// Permission model - No owner
 model Permission {
   id          String            @id @default(uuid())
-  name        String            @unique // e.g., "equipment:read", "equipment:write"
+  name        String            @unique
   description String?
-  groups      GroupPermission[] // Many-to-many with Group
+  groups      GroupPermission[]
   created_at  DateTime          @default(now())
   updated_at  DateTime          @updatedAt
 }
@@ -116,6 +113,8 @@ model GroupPermission {
   @@id([group_id, permission_id])
   @@map("group_permissions")
 }
+
+// Other organizational models (unchanged)
 model Direction {
   id          String       @id @default(uuid())
   name        String
@@ -161,8 +160,8 @@ model Service {
 model Sector {
   id            String      @id @default(uuid())
   name          String
-  department_id String?     // Optional relationship with Department
-  service_id    String?     // Optional relationship with Service
+  department_id String?
+  service_id    String?
   department    Department? @relation(fields: [department_id], references: [id])
   service       Service?    @relation(fields: [service_id], references: [id])
   equipment     Equipment[]
@@ -171,7 +170,7 @@ model Sector {
   requester_requests   Request[]  @relation(name: "RequesterSector")
   destination_requests Request[]  @relation(name: "DestinationSector")
 
-  @@unique([department_id, service_id]) // Ensure a sector can't belong to both a department and a service simultaneously
+  @@unique([department_id, service_id])
 }
 
 model Repartition {
@@ -186,6 +185,7 @@ model Repartition {
   destination_requests Request[]  @relation(name: "DestinationRepartition")
 }
 
+// Equipment model - registered_by is the owner
 model Equipment {
   id             String           @id @default(uuid())
   serial_number  String?          @unique
@@ -194,19 +194,19 @@ model Equipment {
   model          String
   purchase_date  DateTime?
   warranty_end   DateTime?
-  status         String // e.g., "ACTIVE", "MAINTENANCE", "RETIRED"
+  status         String
   direction_id   String?
   department_id  String?
   sector_id      String?
   service_id     String?
   repartition_id String?
-  registered_by  String? // New field to store the user ID
+  registered_by  String?          // This will also serve as ownerId
   direction      Direction?       @relation(fields: [direction_id], references: [id])
   department     Department?      @relation(fields: [department_id], references: [id])
   sector         Sector?          @relation(fields: [sector_id], references: [id])
   service        Service?         @relation(fields: [service_id], references: [id])
   repartition    Repartition?     @relation(fields: [repartition_id], references: [id])
-  registeredBy   User?            @relation(fields: [registered_by], references: [id]) // New relation to User
+  registeredBy   User?            @relation("EquipmentRegisteredBy", fields: [registered_by], references: [id])
   images         EquipmentImage[]
   created_at     DateTime         @default(now())
   updated_at     DateTime         @updatedAt
@@ -216,15 +216,13 @@ model EquipmentImage {
   id                   String    @id @default(uuid())
   equipment_id         String
   cloudinary_public_id String?
-  url                  String // URL to the image (e.g., S3 link)
-  description          String? // Optional description of the image
+  url                  String
+  description          String?
   created_at           DateTime  @default(now())
   equipment            Equipment @relation(fields: [equipment_id], references: [id], onDelete: Cascade)
 
   @@map("equipment_images")
 }
-
-
 
 // Enum for Request Status
 enum RequestStatus {
@@ -236,24 +234,22 @@ enum RequestStatus {
   CANCELLED
 }
 
-// Enum for Request Type (e.g., requisition, return, or substitution)
+// Enum for Request Type
 enum RequestType {
   REQUISITION
   RETURN
   SUBSTITUTION
 }
 
-// Request model to track service/product requests
+// Request model - requester_id is the owner
 model Request {
   id                    String        @id @default(uuid())
-  request_number        String        @unique // e.g., "000124" from the form
-  type                  RequestType   // REQUISITION, RETURN, SUBSTITUTION
+  request_number        String        @unique
+  type                  RequestType
   status                RequestStatus @default(PENDING)
-  requester_id          String?       // Optional: Not required if unauthenticated
-  requester_name        String?       // Store the name of the requester if unauthenticated
+  requester_id          String?       // This will also serve as ownerId
+  requester_name        String?
   requester             User?         @relation(name: "RequestsMade", fields: [requester_id], references: [id], onDelete: Cascade)
-
-  // Requester's organizational units
   requester_direction_id   String?
   requester_department_id  String?
   requester_service_id     String?
@@ -264,8 +260,6 @@ model Request {
   requester_service        Service?      @relation(name: "RequesterService", fields: [requester_service_id], references: [id])
   requester_sector         Sector?       @relation(name: "RequesterSector", fields: [requester_sector_id], references: [id])
   requester_repartition    Repartition?  @relation(name: "RequesterRepartition", fields: [requester_repartition_id], references: [id])
-
-  // Destination organizational units
   destination_direction_id   String?
   destination_department_id  String?
   destination_service_id     String?
@@ -276,23 +270,34 @@ model Request {
   destination_service        Service?      @relation(name: "DestinationService", fields: [destination_service_id], references: [id])
   destination_sector         Sector?       @relation(name: "DestinationSector", fields: [destination_sector_id], references: [id])
   destination_repartition    Repartition?  @relation(name: "DestinationRepartition", fields: [destination_repartition_id], references: [id])
-
-  items                 RequestItem[] // One request can have multiple items
+  items                 RequestItem[]
   created_at            DateTime      @default(now())
   updated_at            DateTime      @updatedAt
-  approved_by           String?       // Optional field for the approver's user ID
+  approved_by           String?
   approver              User?         @relation(name: "RequestsApproved", fields: [approved_by], references: [id])
-  comments              String?       @db.Text // For any additional notes
+  comments              String?       @db.Text
 }
 
-// RequestItem model to handle individual items in a request
 model RequestItem {
   id            String    @id @default(uuid())
   request_id    String
   request       Request   @relation(fields: [request_id], references: [id], onDelete: Cascade)
-  description   String    // e.g., "Pedidos de Reparos de PC Computador"
-  quantity      Int       // e.g., "1 UM" (1 unit)
-  unit          String?   // e.g., "UM" (unit of measure)
+  description   String
+  quantity      Int
+  unit          String?
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
+}
+
+model Notification {
+  id            String    @id @default(uuid())
+  type          String
+  notifiable_id String
+  notifiable_type String
+  data          Json
+  read_at       DateTime?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  @@index([notifiable_id, notifiable_type])
 }

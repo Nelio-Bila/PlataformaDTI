@@ -10,7 +10,7 @@ import {
 
 export default function EquipmentPageSkeleton() {
   return (
-    <div className="p-6 w-full space-y-6">
+    <>
       {/* Breadcrumbs */}
       <div className="flex items-center space-x-2">
         <Skeleton className="h-4 w-16" />
@@ -90,6 +90,6 @@ export default function EquipmentPageSkeleton() {
           <Skeleton className="h-6 w-32" /> {/* Selected */}
         </div>
       </div>
-    </div>
+    </>
   );
 }

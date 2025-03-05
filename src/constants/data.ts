@@ -19,4 +19,10 @@ export const navItems: NavItem[] = [
     icon: "fileText",
     label: "Requisições",
   },
+  {
+    title: "Utilizadores",
+    href: "/users",
+    icon: "user",
+    label: "Utilizadores",
+  },
 ];

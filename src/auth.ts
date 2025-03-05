@@ -1,6 +1,74 @@
+// //src/auth.ts
+// import { login } from "@/actions/auth-actions";
+// import { SafeUserType } from "@/types";
+// import NextAuth, { DefaultSession } from "next-auth";
+// import { AdapterUser } from "next-auth/adapters";
+// import Credentials from "next-auth/providers/credentials";
+// import { authConfig } from "./auth.config";
+
+// export const {
+//   auth,
+//   signIn,
+//   signOut,
+//   handlers: { GET, POST },
+// } = NextAuth({
+//   ...authConfig,
+//   providers: [
+//     Credentials({
+//       name: "credentials",
+//       credentials: {
+//         email: { label: "Email", type: "text" },
+//         password: { label: "Senha", type: "password" },
+//       },
+//       async authorize(credentials) {
+//         if (!credentials?.email || !credentials?.password) {
+//           throw new Error("Email e senha são obrigatórios");
+//         }
+
+//         try {
+//           const user = await login(credentials.email as string, credentials.password as string);
+//           return user;
+//         } catch (error: any) {
+//           console.log(error)
+//           return null
+//         }
+//       },
+//     }),
+//   ],
+//   session: {
+//     strategy: "jwt",
+//   },
+//   callbacks: {
+//     async session({ session, token }) {
+//       session.user = token.user as AdapterUser & SafeUserType;
+//       return session;
+//     },
+//     async jwt({ token, user }) {
+//       if (user) {
+//         token.user = user;
+//       }
+//       return token ? token : null;
+//     },
+//   },
+// });
+
+// declare module "next-auth" {
+//   interface Session extends DefaultSession {
+//     user: SafeUserType;
+//   }
+
+//   interface User extends SafeUserType {}
+// }
+
+
+
+
+
+
+
 import { login } from "@/actions/auth-actions";
 import { SafeUserType } from "@/types";
-import NextAuth, { DefaultSession } from "next-auth";
+import NextAuth from "next-auth";
 import { AdapterUser } from "next-auth/adapters";
 import Credentials from "next-auth/providers/credentials";
 import { authConfig } from "./auth.config";
@@ -27,34 +95,54 @@ export const {
         try {
           const user = await login(credentials.email as string, credentials.password as string);
           return user;
-        } catch (error: any) {
-          console.log(error)
-          return null
+        } catch (error) {
+          console.error("Authorize error:", error);
+          return null;
         }
       },
     }),
   ],
   session: {
     strategy: "jwt",
+    maxAge: 15 * 60, // 15 minutes in seconds
   },
   callbacks: {
     async session({ session, token }) {
-      session.user = token.user as AdapterUser & SafeUserType;
+      if (token.user) {
+        session.user = token.user as AdapterUser & SafeUserType;
+      }
+      // Use type assertion to force expires as string if necessary
+      session.expires = new Date(Date.now() + 15 * 60 * 1000).toISOString() as any; // Temporary workaround
       return session;
     },
     async jwt({ token, user }) {
       if (user) {
         token.user = user;
+        token.iat = Math.floor(Date.now() / 1000);
+        token.exp = Math.floor(Date.now() / 1000) + 15 * 60;
       }
-      return token ? token : null;
+
+      if (token.exp && Date.now() / 1000 > token.exp) {
+        return null;
+      }
+
+      return token;
     },
   },
 });
 
+// Type augmentations for NextAuth
 declare module "next-auth" {
-  interface Session extends DefaultSession {
+  interface Session {
     user: SafeUserType;
+    expires: string; // Explicitly a string
   }
 
   interface User extends SafeUserType {}
+
+  interface JWT {
+    user?: SafeUserType;
+    iat?: number;
+    exp?: number;
+  }
 }

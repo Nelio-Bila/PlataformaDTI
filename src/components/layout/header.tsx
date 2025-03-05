@@ -3,6 +3,7 @@ import ThemeToggle from "@/components/layout/theme-toggle/theme-toggle";
 import NewResource from "@/components/shared/new-resource";
 import { UserNav } from "@/components/shared/user-nav";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 
 export default function Header() {
@@ -15,6 +16,7 @@ export default function Header() {
         <div className="flex items-center gap-2">
           <NewResource />
           <ThemeToggle />
+          <NotificationBell />
           <UserNav />
         </div>
       </nav>

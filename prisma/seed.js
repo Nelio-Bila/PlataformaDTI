@@ -4,149 +4,167 @@ import { hash } from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-    // Delete all existing data to replace everything
+    // Delete all existing data
     await prisma.userGroup.deleteMany({});
     await prisma.groupPermission.deleteMany({});
     await prisma.permission.deleteMany({});
     await prisma.group.deleteMany({});
     await prisma.user.deleteMany({});
+    await prisma.requestItem.deleteMany({});
+    await prisma.request.deleteMany({});
+    await prisma.equipmentImage.deleteMany({});
+    await prisma.equipment.deleteMany({});
     await prisma.repartition.deleteMany({});
     await prisma.sector.deleteMany({});
     await prisma.service.deleteMany({});
     await prisma.department.deleteMany({});
     await prisma.direction.deleteMany({});
 
-    // Seed Directions (Direções)
-    const directionGeral = await prisma.direction.create({ data: { name: "Geral" } });
-    const directionClinica = await prisma.direction.create({ data: { name: "Clínica" } });
-    const directionAdministrativa = await prisma.direction.create({ data: { name: "Administrativa" } });
-    const directionEnfermagem = await prisma.direction.create({ data: { name: "Enfermagem" } });
-    const directionCientificaPedagogica = await prisma.direction.create({ data: { name: "Científica e Pedagógica" } });
+    // Seed Directions
+    const directionsData = [
+        { name: "Geral" },
+        { name: "Clínica" },
+        { name: "Administrativa" },
+        { name: "Enfermagem" },
+        { name: "Científica e Pedagógica" },
+    ];
+    await prisma.direction.createMany({ data: directionsData });
 
-    // Seed Departments (Departamentos) under Direção Clínica
-    const deptCirurgia = await prisma.department.create({ data: { name: "Cirurgia", direction_id: directionClinica.id } });
-    const deptMedicina = await prisma.department.create({ data: { name: "Medicina", direction_id: directionClinica.id } });
-    const deptPediatria = await prisma.department.create({ data: { name: "Pediatria", direction_id: directionClinica.id } });
-    const deptOrtopedia = await prisma.department.create({ data: { name: "Ortopedia", direction_id: directionClinica.id } });
-    const deptGinecologiaObstetricia = await prisma.department.create({ data: { name: "Ginecologia e Obstetrícia", direction_id: directionClinica.id } });
-    const deptMedicinaFisicaReabilitacao = await prisma.department.create({ data: { name: "Medicina Física e Reabilitação", direction_id: directionClinica.id } });
-    const deptClinicaEspecial = await prisma.department.create({ data: { name: "Clínica Especial", direction_id: directionClinica.id } });
-    const deptOncologia = await prisma.department.create({ data: { name: "Oncologia", direction_id: directionClinica.id } });
-    const deptLaboratorio = await prisma.department.create({ data: { name: "Laboratório Clínico", direction_id: directionClinica.id } });
-    const deptAnatomiaPatologica = await prisma.department.create({ data: { name: "Anatomia Patológica", direction_id: directionClinica.id } });
-    const deptFarmacia = await prisma.department.create({ data: { name: "Farmácia", direction_id: directionClinica.id } });
+    const directionGeral = await prisma.direction.findFirst({ where: { name: "Geral" } });
+    const directionClinica = await prisma.direction.findFirst({ where: { name: "Clínica" } });
+    const directionAdministrativa = await prisma.direction.findFirst({ where: { name: "Administrativa" } });
+    const directionEnfermagem = await prisma.direction.findFirst({ where: { name: "Enfermagem" } });
+    const directionCientificaPedagogica = await prisma.direction.findFirst({ where: { name: "Científica e Pedagógica" } });
 
-    // Seed Departments (Departamentos) under Direção Administrativa
-    const deptControleInterno = await prisma.department.create({ data: { name: "Controle Interno", direction_id: directionAdministrativa.id } });
-    const deptPlanejamentoEstastistica = await prisma.department.create({ data: { name: "Planejamento e Estatística", direction_id: directionAdministrativa.id } });
-    const deptRecursosHumanos = await prisma.department.create({ data: { name: "Recursos Humanos", direction_id: directionAdministrativa.id } });
-    const deptFinanceiro = await prisma.department.create({ data: { name: "Financeiro", direction_id: directionAdministrativa.id } });
-    const deptUGEIA = await prisma.department.create({ data: { name: "UGEIA", direction_id: directionAdministrativa.id } });
-    const deptPatrimonio = await prisma.department.create({ data: { name: "Património", direction_id: directionAdministrativa.id } });
-    const deptManutencaoHospitalar = await prisma.department.create({ data: { name: "Manutenção Hospitalar", direction_id: directionAdministrativa.id } });
-    const deptTecnologiasInformacao = await prisma.department.create({ data: { name: "Tecnologias de Informação", direction_id: directionAdministrativa.id } });
+    // Seed Departments under Direção Clínica
+    const departmentsClinicaData = [
+        { name: "Cirurgia", direction_id: directionClinica.id },
+        { name: "Medicina", direction_id: directionClinica.id },
+        { name: "Pediatria", direction_id: directionClinica.id },
+        { name: "Ortopedia", direction_id: directionClinica.id },
+        { name: "Ginecologia e Obstetrícia", direction_id: directionClinica.id },
+        { name: "Medicina Física e Reabilitação", direction_id: directionClinica.id },
+        { name: "Clínica Especial", direction_id: directionClinica.id },
+        { name: "Oncologia", direction_id: directionClinica.id },
+        { name: "Laboratório Clínico", direction_id: directionClinica.id },
+        { name: "Anatomia Patológica", direction_id: directionClinica.id },
+        { name: "Farmácia", direction_id: directionClinica.id },
+    ];
+    await prisma.department.createMany({ data: departmentsClinicaData });
 
-    // Seed Departments (Departamentos) under Direção de Enfermagem
-    const deptEnfermagemPediatria = await prisma.department.create({ data: { name: "Enfermagem de Pediatria", direction_id: directionEnfermagem.id } });
-    const deptEnfermagemMedicina = await prisma.department.create({ data: { name: "Enfermagem de Medicina", direction_id: directionEnfermagem.id } });
-    const deptEnfermagemOrtopedia = await prisma.department.create({ data: { name: "Enfermagem de Ortopedia", direction_id: directionEnfermagem.id } });
-    const deptEnfermagemGinecologiaObstetricia = await prisma.department.create({ data: { name: "Enfermagem de Ginecologia e Obstetrícia", direction_id: directionEnfermagem.id } });
-    const deptEnfermagemClinicaEspecial = await prisma.department.create({ data: { name: "Enfermagem de Clínica Especial", direction_id: directionEnfermagem.id } });
-    const deptEnfermagemBlocoOperatorio = await prisma.department.create({ data: { name: "Enfermagem do Bloco Operatório", direction_id: directionEnfermagem.id } });
+    // Seed Departments under Direção Administrativa
+    const departmentsAdministrativaData = [
+        { name: "Controle Interno", direction_id: directionAdministrativa.id },
+        { name: "Planejamento e Estatística", direction_id: directionAdministrativa.id },
+        { name: "Recursos Humanos", direction_id: directionAdministrativa.id },
+        { name: "Financeiro", direction_id: directionAdministrativa.id },
+        { name: "UGEIA", direction_id: directionAdministrativa.id },
+        { name: "Património", direction_id: directionAdministrativa.id },
+        { name: "Manutenção Hospitalar", direction_id: directionAdministrativa.id },
+        { name: "Tecnologias de Informação", direction_id: directionAdministrativa.id },
+    ];
+    await prisma.department.createMany({ data: departmentsAdministrativaData });
 
-    // Seed Departments (Departamentos) under Direção Científica e Pedagógica
-    const deptCoordenacaoMedicas = await prisma.department.create({ data: { name: "Coordenação Médicas", direction_id: directionCientificaPedagogica.id } });
-    const deptEstagiosProfissionais = await prisma.department.create({ data: { name: "Estágios Profissionais", direction_id: directionCientificaPedagogica.id } });
-    const deptFormacaoContinua = await prisma.department.create({ data: { name: "Formação Contínua", direction_id: directionCientificaPedagogica.id } });
-    const deptInvestigacaoCientifica = await prisma.department.create({ data: { name: "Investigação Científica", direction_id: directionCientificaPedagogica.id } });
+    // Fetch Departments for later use
+    const deptCirurgia = await prisma.department.findFirst({ where: { name: "Cirurgia" } });
+    const deptMedicina = await prisma.department.findFirst({ where: { name: "Medicina" } });
+    const deptPediatria = await prisma.department.findFirst({ where: { name: "Pediatria" } });
+    const deptOrtopedia = await prisma.department.findFirst({ where: { name: "Ortopedia" } });
+    const deptGinecologiaObstetricia = await prisma.department.findFirst({ where: { name: "Ginecologia e Obstetrícia" } });
+    const deptMedicinaFisicaReabilitacao = await prisma.department.findFirst({ where: { name: "Medicina Física e Reabilitação" } });
+    const deptClinicaEspecial = await prisma.department.findFirst({ where: { name: "Clínica Especial" } });
+    const deptOncologia = await prisma.department.findFirst({ where: { name: "Oncologia" } });
+    const deptLaboratorio = await prisma.department.findFirst({ where: { name: "Laboratório Clínico" } });
+    const deptAnatomiaPatologica = await prisma.department.findFirst({ where: { name: "Anatomia Patológica" } });
+    const deptFarmacia = await prisma.department.findFirst({ where: { name: "Farmácia" } });
+    const deptControleInterno = await prisma.department.findFirst({ where: { name: "Controle Interno" } });
+    const deptPlanejamentoEstastistica = await prisma.department.findFirst({ where: { name: "Planejamento e Estatística" } });
+    const deptRecursosHumanos = await prisma.department.findFirst({ where: { name: "Recursos Humanos" } });
+    const deptFinanceiro = await prisma.department.findFirst({ where: { name: "Financeiro" } });
+    const deptUGEIA = await prisma.department.findFirst({ where: { name: "UGEIA" } });
+    const deptPatrimonio = await prisma.department.findFirst({ where: { name: "Património" } });
+    const deptManutencaoHospitalar = await prisma.department.findFirst({ where: { name: "Manutenção Hospitalar" } });
+    const deptTecnologiasInformacao = await prisma.department.findFirst({ where: { name: "Tecnologias de Informação" } });
 
-    // Seed Services (Serviços) under Direção Administrativa
-    const serviceAlimentacaoNutricaoDietetica = await prisma.service.create({ data: { name: "Alimentação, Nutrição e Dietética", direction_id: directionAdministrativa.id } });
-    const serviceLavandariaHospitalar = await prisma.service.create({ data: { name: "Lavandaria Hospitalar", direction_id: directionAdministrativa.id } });
-    const serviceApoioGeral = await prisma.service.create({ data: { name: "Apoio Geral", direction_id: directionAdministrativa.id } });
-    const serviceSegurancaInterna = await prisma.service.create({ data: { name: "Segurança Interna", direction_id: directionAdministrativa.id } });
-    const serviceRelacoesPublicas = await prisma.service.create({ data: { name: "Relações Públicas", direction_id: directionAdministrativa.id } });
-    const serviceAcssaoSocial = await prisma.service.create({ data: { name: "Acesso Social", direction_id: directionAdministrativa.id } });
-    const serviceAdministracaoClinicos = await prisma.service.create({ data: { name: "Administração dos Departamentos Clínicos", direction_id: directionAdministrativa.id } });
-    const serviceAdministracaoPediatria = await prisma.service.create({ data: { name: "Administração do Departamento de Pediatria", direction_id: directionAdministrativa.id } });
-    const serviceAdministracaoMedicina = await prisma.service.create({ data: { name: "Administração do Departamento de Medicina", direction_id: directionAdministrativa.id } });
-    const serviceAdministracaoCirurgia = await prisma.service.create({ data: { name: "Administração do Departamento de Cirurgia", direction_id: directionAdministrativa.id } });
-    const serviceAdministracaoOrtopedia = await prisma.service.create({ data: { name: "Administração do Departamento de Ortopedia", direction_id: directionAdministrativa.id } });
-    const serviceAdministracaoGinecObst = await prisma.service.create({ data: { name: "Administração do Departamento de Ginecologia e Obstetrícia", direction_id: directionAdministrativa.id } });
+    // Seed Services under Direção Administrativa
+    const servicesAdministrativaData = [
+        { name: "Alimentação, Nutrição e Dietética", direction_id: directionAdministrativa.id },
+        { name: "Lavandaria Hospitalar", direction_id: directionAdministrativa.id },
+        { name: "Apoio Geral", direction_id: directionAdministrativa.id },
+        { name: "Segurança Interna", direction_id: directionAdministrativa.id },
+        { name: "Relações Públicas", direction_id: directionAdministrativa.id },
+        { name: "Acesso Social", direction_id: directionAdministrativa.id },
+        { name: "Administração dos Departamentos Clínicos", direction_id: directionAdministrativa.id },
+        { name: "Administração do Departamento de Pediatria", direction_id: directionAdministrativa.id },
+        { name: "Administração do Departamento de Medicina", direction_id: directionAdministrativa.id },
+        { name: "Administração do Departamento de Cirurgia", direction_id: directionAdministrativa.id },
+        { name: "Administração do Departamento de Ortopedia", direction_id: directionAdministrativa.id },
+        { name: "Administração do Departamento de Ginecologia e Obstetrícia", direction_id: directionAdministrativa.id },
+    ];
+    await prisma.service.createMany({ data: servicesAdministrativaData });
 
-    // Seed Services (Serviços) under Direção Clínica
-    const serviceBancoSangue = await prisma.service.create({ data: { name: "Banco de Sangue", department_id: deptMedicina.id } });
-    const serviceLabAnalisesClinicas = await prisma.service.create({ data: { name: "Laboratório de Análises Clínicas", department_id: deptLaboratorio.id } });
-    const serviceAnatomiaPatologica = await prisma.service.create({ data: { name: "Anatomia Patológica", department_id: deptAnatomiaPatologica.id } });
-    const serviceMedicinaLegal = await prisma.service.create({ data: { name: "Medicina Legal", department_id: deptMedicina.id } });
-    const serviceBlocoOperatorio = await prisma.service.create({ data: { name: "Bloco Operatório", department_id: deptCirurgia.id } });
-    const serviceRadiologiaImagem = await prisma.service.create({ data: { name: "Radiologia e Imagiologia", department_id: deptMedicina.id } });
-    const serviceFarmarcia = await prisma.service.create({ data: { name: "Farmácia", department_id: deptFarmacia.id } });
-    const serviceAnestesiologia = await prisma.service.create({ data: { name: "Anestesiologia", department_id: deptMedicina.id } });
-    const serviceUrgenciasAdultos = await prisma.service.create({ data: { name: "Urgências de Adultos", department_id: deptMedicina.id } });
-    const serviceUnidadeCuidadosIntensivos = await prisma.service.create({ data: { name: "Unidade de Cuidados Intensivos", department_id: deptMedicina.id } });
-    const serviceUnidadeGenetica = await prisma.service.create({ data: { name: "Unidade de Genética", department_id: deptMedicina.id } });
+    // Seed Services under Direção Clínica
+    const servicesClinicaData = [
+        { name: "Banco de Sangue", department_id: deptMedicina.id },
+        { name: "Laboratório de Análises Clínicas", department_id: deptLaboratorio.id },
+        { name: "Anatomia Patológica", department_id: deptAnatomiaPatologica.id },
+        { name: "Medicina Legal", department_id: deptMedicina.id },
+        { name: "Bloco Operatório", department_id: deptCirurgia.id },
+        { name: "Radiologia e Imagiologia", department_id: deptMedicina.id },
+        { name: "Farmácia", department_id: deptFarmacia.id },
+        { name: "Anestesiologia", department_id: deptMedicina.id },
+        { name: "Urgências de Adultos", department_id: deptMedicina.id },
+        { name: "Unidade de Cuidados Intensivos", department_id: deptMedicina.id },
+        { name: "Unidade de Genética", department_id: deptMedicina.id },
+    ];
+    await prisma.service.createMany({ data: servicesClinicaData });
 
-    // Seed Services (Serviços) under Direção de Enfermagem
-    const serviceEnfermagemPediatria = await prisma.service.create({ data: { name: "Enfermagem de Pediatria", department_id: deptEnfermagemPediatria.id } });
-    const serviceEnfermagemMedicina = await prisma.service.create({ data: { name: "Enfermagem de Medicina", department_id: deptEnfermagemMedicina.id } });
-    const serviceEnfermagemOrtopedia = await prisma.service.create({ data: { name: "Enfermagem de Ortopedia", department_id: deptEnfermagemOrtopedia.id } });
-    const serviceEnfermagemGinecologiaObstetricia = await prisma.service.create({ data: { name: "Enfermagem de Ginecologia e Obstetrícia", department_id: deptEnfermagemGinecologiaObstetricia.id } });
-    const serviceEnfermagemClinicaEspecial = await prisma.service.create({ data: { name: "Enfermagem de Clínica Especial", department_id: deptEnfermagemClinicaEspecial.id } });
-    const serviceEnfermagemBlocoOperatorio = await prisma.service.create({ data: { name: "Enfermagem do Bloco Operatório", department_id: deptEnfermagemBlocoOperatorio.id } });
-    const serviceEnfermagemServicoAdultos = await prisma.service.create({ data: { name: "Enfermagem do Serviço de Adultos", department_id: deptEnfermagemMedicina.id } });
-    const serviceEnfermagemCentralEsterilizacao = await prisma.service.create({ data: { name: "Enfermagem da Central de Esterilização", department_id: deptEnfermagemBlocoOperatorio.id } });
+    // Fetch Services for later use
+    const serviceBancoSangue = await prisma.service.findFirst({ where: { name: "Banco de Sangue" } });
+    const serviceLabAnalisesClinicas = await prisma.service.findFirst({ where: { name: "Laboratório de Análises Clínicas" } });
+    const serviceAnatomiaPatologica = await prisma.service.findFirst({ where: { name: "Anatomia Patológica" } });
+    const serviceMedicinaLegal = await prisma.service.findFirst({ where: { name: "Medicina Legal" } });
+    const serviceBlocoOperatorio = await prisma.service.findFirst({ where: { name: "Bloco Operatório" } });
+    const serviceRadiologiaImagem = await prisma.service.findFirst({ where: { name: "Radiologia e Imagiologia" } });
+    const serviceFarmarcia = await prisma.service.findFirst({ where: { name: "Farmácia" } });
+    const serviceAnestesiologia = await prisma.service.findFirst({ where: { name: "Anestesiologia" } });
+    const serviceUrgenciasAdultos = await prisma.service.findFirst({ where: { name: "Urgências de Adultos" } });
+    const serviceUnidadeCuidadosIntensivos = await prisma.service.findFirst({ where: { name: "Unidade de Cuidados Intensivos" } });
+    const serviceUnidadeGenetica = await prisma.service.findFirst({ where: { name: "Unidade de Genética" } });
 
-    // Seed Services (Serviços) under Medicina Física e Reabilitação
-    const serviceOrtoprotesia = await prisma.service.create({ data: { name: "Ortoprotesia", department_id: deptMedicinaFisicaReabilitacao.id } });
+    // Seed Sectors under Services/Departments
+    const sectorsData = [
+        { name: "Hidroterapia", department_id: deptMedicinaFisicaReabilitacao.id },
+        { name: "Electroterapia", department_id: deptMedicinaFisicaReabilitacao.id },
+        { name: "Centro Cirúrgico", department_id: deptCirurgia.id },
+        { name: "Urgência de Adultos", department_id: deptMedicina.id },
+        { name: "Bioquímica", department_id: deptLaboratorio.id },
+    ];
+    await prisma.sector.createMany({ data: sectorsData });
 
-    // Seed Sectors (Setores) under Services
-    const sectorHidroterapia = await prisma.sector.create({ data: { name: "Hidroterapia", department_id: deptMedicinaFisicaReabilitacao.id } });
-    const sectorElectroterapia = await prisma.sector.create({ data: { name: "Electroterapia", department_id: deptMedicinaFisicaReabilitacao.id } });
-    const sectorCentroCirurgico = await prisma.sector.create({ data: { name: "Centro Cirúrgico", department_id: deptCirurgia.id } });
-    const sectorUrgenciaAdultos = await prisma.sector.create({ data: { name: "Urgência de Adultos", department_id: deptMedicina.id } });
-    const sectorBioquimica = await prisma.sector.create({ data: { name: "Bioquímica", department_id: deptLaboratorio.id } });
-    const sectorProteses = await prisma.sector.create({ data: { name: "Próteses", service_id: serviceOrtoprotesia.id } });
-    const sectorOrtoteses = await prisma.sector.create({ data: { name: "Ortoteses", service_id: serviceOrtoprotesia.id } });
+    // Seed Repartitions under Departments
+    const repartitionsData = [
+        { name: "Tesouraria", department_id: deptFinanceiro.id },
+        { name: "Legalidade", department_id: deptFinanceiro.id },
+        { name: "Contabilidade", department_id: deptFinanceiro.id },
+        { name: "Atendimento a Empresas", department_id: deptFinanceiro.id },
+        { name: "Direcção do DF", department_id: deptFinanceiro.id },
+        { name: "Gestão Orçamental", department_id: deptFinanceiro.id },
+        { name: "Relações Públicas", department_id: deptRecursosHumanos.id },
+        { name: "Secretaria RH", department_id: deptRecursosHumanos.id },
+        { name: "Direcção dos RH", department_id: deptRecursosHumanos.id },
+        { name: "Sala de Operações", department_id: deptCirurgia.id },
+        { name: "Sala UCI", department_id: deptMedicina.id },
+        { name: "Farmácia Central", department_id: deptFarmacia.id },
+    ];
+    await prisma.repartition.createMany({ data: repartitionsData });
 
-    // Seed Repartitions (Repartições) under Departments
-    const reparticaoTesouraria = await prisma.repartition.create({ data: { name: "Tesouraria", department_id: deptFinanceiro.id } });
-    const reparticaoLegalidade = await prisma.repartition.create({ data: { name: "Legalidade", department_id: deptFinanceiro.id } });
-    const reparticaoContabilidade = await prisma.repartition.create({ data: { name: "Contabilidade", department_id: deptFinanceiro.id } });
-    const reparticaoAtendimentoAEmpresas = await prisma.repartition.create({ data: { name: "Atendimento a Empresas", department_id: deptFinanceiro.id } });
-    const reparticaoDireccaoDF = await prisma.repartition.create({ data: { name: "Direcção do DF", department_id: deptFinanceiro.id } });
-    const reparticaoGestaoOrcamental = await prisma.repartition.create({ data: { name: "Gestão Orçamental", department_id: deptFinanceiro.id } });
-    const reparticaoRelacoesPublicas = await prisma.repartition.create({ data: { name: "Relações Públicas", department_id: deptRecursosHumanos.id } });
-    const reparticaoSecretariaRH = await prisma.repartition.create({ data: { name: "Secretaria RH", department_id: deptRecursosHumanos.id } });
-    const reparticaoDireccaoRH = await prisma.repartition.create({ data: { name: "Direcção dos RH", department_id: deptRecursosHumanos.id } });
-    const reparticaoSalaOperacao1 = await prisma.repartition.create({ data: { name: "Sala de Operações", department_id: deptCirurgia.id } });
-    const reparticaoUCI = await prisma.repartition.create({ data: { name: "Sala UCI", department_id: deptMedicina.id } });
-    const reparticaoFarmaciaCentral = await prisma.repartition.create({ data: { name: "Farmácia Central", department_id: deptFarmacia.id } });
-
-    // Seed Groups (Grupos) - Only "Admins" and "Technicians"
-    const groupAdmins = await prisma.group.create({
-        data: {
-            name: "Admins",
-            description: "Administradores com acesso total ao sistema",
-        },
-    });
-
-    const groupTechnicians = await prisma.group.create({
-        data: {
-            name: "Technicians",
-            description: "Equipe técnica responsável por manutenção",
-        },
-    });
-
-    // Seed Users (Usuários) and connect to "Admins" group
+    // Seed Users
     const nelio = await prisma.user.create({
         data: {
             email: "nelio.bila@hcm.gov.mz",
             password: await hash("inatounico", 10),
             name: "Nélio Bila",
-            groups: {
-                create: [{ group_id: groupAdmins.id }],
-            },
         },
     });
 
@@ -155,9 +173,6 @@ async function main() {
             email: "luciano.aguiar@hcm.gov.mz",
             password: await hash("password", 10),
             name: "Luciano Aguiar",
-            groups: {
-                create: [{ group_id: groupAdmins.id }],
-            },
         },
     });
 
@@ -166,9 +181,6 @@ async function main() {
             email: "stela.davane@hcm.gov.mz",
             password: await hash("password", 10),
             name: "Stela Davane",
-            groups: {
-                create: [{ group_id: groupAdmins.id }],
-            },
         },
     });
 
@@ -177,36 +189,146 @@ async function main() {
             email: "carolina.sumbana@hcm.gov.mz",
             password: await hash("password", 10),
             name: "Carolina Sumbana",
-            groups: {
-                create: [{ group_id: groupAdmins.id }],
-            },
         },
     });
 
-    // Seed Permissions (Permissões)
-    const permissionRead = await prisma.permission.create({
+    // Seed Base Groups
+    const groupAdmins = await prisma.group.create({
         data: {
-            name: "equipment:read",
-            description: "Permissão para visualizar dados de equipamentos",
+            name: "Admins",
+            description: "Administradores com acesso total ao sistema",
         },
     });
 
-    const permissionWrite = await prisma.permission.create({
-        data: {
-            name: "equipment:write",
-            description: "Permissão para editar dados de equipamentos",
-        },
-    });
+    // Seed Groups based on Directions, Departments, Services, Sectors, and Repartitions with unique names
+    const allDirections = await prisma.direction.findMany();
+    const allDepartments = await prisma.department.findMany();
+    const allServices = await prisma.service.findMany();
+    const allSectors = await prisma.sector.findMany();
+    const allRepartitions = await prisma.repartition.findMany();
 
-    // Seed Group-Permission Relationships (Relações Grupo-Permissão)
-    await prisma.groupPermission.createMany({
+    await prisma.group.createMany({
         data: [
-            { group_id: groupAdmins.id, permission_id: permissionRead.id },
-            { group_id: groupAdmins.id, permission_id: permissionWrite.id },
-            { group_id: groupTechnicians.id, permission_id: permissionRead.id },
-            { group_id: groupTechnicians.id, permission_id: permissionWrite.id },
+            ...allDirections.map(direction => ({
+                name: `Direction: ${direction.name}`,
+                description: `Grupo para membros da Direção ${direction.name}`,
+            })),
+            ...allDepartments.map(department => ({
+                name: `Department: ${department.name}`,
+                description: `Grupo para membros do Departamento ${department.name}`,
+            })),
+            ...allServices.map(service => ({
+                name: `Service: ${service.name}`,
+                description: `Grupo para membros do Serviço ${service.name}`,
+            })),
+            ...allSectors.map(sector => ({
+                name: `Sector: ${sector.name}`,
+                description: `Grupo para membros do Setor ${sector.name}`,
+            })),
+            ...allRepartitions.map(repartition => ({
+                name: `Repartition: ${repartition.name}`,
+                description: `Grupo para membros da Repartição ${repartition.name}`,
+            })),
+        ],
+        skipDuplicates: true,
+    });
+
+    // Fetch the "Department: Tecnologias de Informação" group (Technicians)
+    const groupTechnicians = await prisma.group.findFirst({ where: { name: "Department: Tecnologias de Informação" } });
+
+    // Connect Users to Groups
+    await prisma.userGroup.createMany({
+        data: [
+            { user_id: nelio.id, group_id: groupAdmins.id },
+            { user_id: stela.id, group_id: groupAdmins.id },
+            { user_id: luciano.id, group_id: groupTechnicians.id }, // Luciano in Technicians
+            { user_id: carolina.id, group_id: groupTechnicians.id }, // Carolina in Technicians
+            // Example assignments to other groups
+            //   { user_id: stela.id, group_id: (await prisma.group.findFirst({ where: { name: "Direction: Administrativa" } })).id },
         ],
     });
+
+    // Seed Permissions
+    await prisma.permission.createMany({
+        data: [
+            // User CRUD (Admins only)
+            { name: "user:read", description: "Permissão para visualizar usuários" },
+            { name: "user:create", description: "Permissão para criar usuários" },
+            { name: "user:update", description: "Permissão para atualizar usuários" },
+            { name: "user:delete", description: "Permissão para excluir usuários" },
+
+            // Group CRUD (Admins only)
+            { name: "group:read", description: "Permissão para visualizar grupos" },
+            { name: "group:create", description: "Permissão para criar grupos" },
+            { name: "group:update", description: "Permissão para atualizar grupos" },
+            { name: "group:delete", description: "Permissão para excluir grupos" },
+
+            // Permission CRUD (Admins only)
+            { name: "permission:read", description: "Permissão para visualizar permissões" },
+            { name: "permission:create", description: "Permissão para criar permissões" },
+            { name: "permission:update", description: "Permissão para atualizar permissões" },
+            { name: "permission:delete", description: "Permissão para excluir permissões" },
+
+            // Request Permissions
+            { name: "request:read", description: "Permissão para visualizar todas as solicitações (Admins)" },
+            { name: "request:create", description: "Permissão para criar solicitações (Todos)" },
+            { name: "request:update", description: "Permissão para atualizar solicitações (Admins)" },
+            { name: "request:delete", description: "Permissão para excluir solicitações (Admins)" },
+            { name: "request:owner:read", description: "Permissão para visualizar próprias solicitações emitidas" },
+            { name: "request:owner:update", description: "Permissão para atualizar próprias solicitações emitidas" },
+            { name: "request:owner:delete", description: "Permissão para excluir próprias solicitações emitidas" },
+            { name: "request:destination:read", description: "Permissão para visualizar solicitações recebidas" },
+            { name: "request:approve", description: "Permissão para aprovar solicitações (Admins)" },
+
+            // Equipment Permissions (Admins and Tecnologias de Informação only)
+            { name: "equipment:read", description: "Permissão para visualizar equipamentos" },
+            { name: "equipment:create", description: "Permissão para criar equipamentos" },
+            { name: "equipment:update", description: "Permissão para atualizar equipamentos" },
+            { name: "equipment:delete", description: "Permissão para excluir equipamentos" },
+        ],
+    });
+
+    // Fetch all created permissions and groups
+    const allPermissions = await prisma.permission.findMany();
+    const allGroups = await prisma.group.findMany();
+
+    // Seed Group-Permission Relationships
+    const groupPermissions = allPermissions.flatMap(permission => {
+        const assignments = [];
+
+        // Admins get all permissions
+        assignments.push({ group_id: groupAdmins.id, permission_id: permission.id });
+
+        // Department: Tecnologias de Informação (Technicians) gets full equipment access
+        if (permission.name.startsWith("equipment:")) {
+            assignments.push({ group_id: groupTechnicians.id, permission_id: permission.id });
+        }
+
+        // All groups get request:create and request:owner:* permissions
+        if (
+            permission.name === "request:create" ||
+            permission.name.startsWith("request:owner:")
+        ) {
+            allGroups
+                .filter(g => g.name !== "Admins") // Exclude Admins since they already have all permissions
+                .forEach(g => assignments.push({ group_id: g.id, permission_id: permission.id }));
+        }
+
+        // All groups get request:destination:read for requests they receive
+        if (permission.name === "request:destination:read") {
+            allGroups
+                .filter(g => g.name !== "Admins") // Exclude Admins since they already have all permissions
+                .forEach(g => assignments.push({ group_id: g.id, permission_id: permission.id }));
+        }
+
+        return assignments;
+    });
+
+    await prisma.groupPermission.createMany({
+        data: groupPermissions,
+        skipDuplicates: true,
+    });
+
 
     console.log("Seeder concluído com sucesso!");
 }

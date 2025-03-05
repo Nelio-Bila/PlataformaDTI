@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user?.password) {
-      return NextResponse.json({ success: false, error: "Usuário não encontrado" }, { status: 404 });
+      return NextResponse.json({ success: false, error: "Utilizador não encontrado" }, { status: 404 });
     }
 
     const isValid = await compare(validatedFields.currentPassword, user.password);

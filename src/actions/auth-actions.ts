@@ -88,7 +88,7 @@ export async function update_password(
     });
 
     if (!user?.password) {
-      return { success: false, error: "Usuário não encontrado" };
+      return { success: false, error: "Utilizador não encontrado" };
     }
 
     const isValid = await compare(validatedFields.currentPassword, user.password);

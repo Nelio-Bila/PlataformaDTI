@@ -327,7 +327,7 @@ const ProfilePage = () => {
           <Card>
             <CardHeader>
               <CardTitle>Segurança</CardTitle>
-              <CardDescription>Gerencie suas configurações de segurança</CardDescription>
+              <CardDescription>Gere suas configurações de segurança</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-4">

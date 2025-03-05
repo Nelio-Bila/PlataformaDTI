@@ -3,7 +3,7 @@
 
 import TableFilter from "@/components/datatable/table-filter";
 import TableSortHeader from "@/components/datatable/table-sort-header";
-import EquipmentPageSkeleton from "@/components/skeletons/equipment-page-skeleton";
+import EquipmentClientSkeleton from "@/components/skeletons/equipment-client-skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -511,7 +511,7 @@ export function EquipmentClient() {
   }, [table, columnVisibility]);
 
   if (isEquipmentLoading || isFilterLoading) {
-    return <EquipmentPageSkeleton />;
+    return <EquipmentClientSkeleton />;
   }
 
   if (equipmentError) {

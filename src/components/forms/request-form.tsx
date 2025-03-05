@@ -14,7 +14,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -34,6 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
@@ -47,24 +47,31 @@ import { Department, Direction, Repartition, Sector, Service } from "@prisma/cli
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
+  Check,
+  ChevronsUpDown,
   Hash,
   Hospital,
   Loader2,
-  Package,
-  Check,
-  ChevronsUpDown,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { useRouter } from "nextjs-toploader/app";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 
-const requestSchema = z.object({
-  type: z.enum(["REQUISITION", "RETURN", "SUBSTITUTION"], { required_error: "Tipo é obrigatório" }),
-  requester_name: z.string().min(1, { message: "Nome do solicitante é obrigatório" }),
+// Define the schema for a single item
+const itemSchema = z.object({
   description: z.string().min(1, { message: "Descrição é obrigatória" }),
   quantity: z.number().min(1, { message: "Quantidade deve ser pelo menos 1" }),
   unit: z.string().optional(),
+});
+
+// Updated request schema to include an array of items
+const requestSchema = z.object({
+  type: z.enum(["REQUISITION", "RETURN", "SUBSTITUTION"], { required_error: "Tipo é obrigatório" }),
+  requester_name: z.string().min(1, { message: "Nome do solicitante é obrigatório" }),
+  items: z.array(itemSchema).min(1, { message: "Pelo menos um item é obrigatório" }),
   requester_direction_id: z.string().optional(),
   requester_department_id: z.string().optional(),
   requester_service_id: z.string().optional(),
@@ -90,7 +97,6 @@ export function RequestForm() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [isTypeOpen, setIsTypeOpen] = useState(false);
   const [isRequesterDirectionOpen, setIsRequesterDirectionOpen] = useState(false);
   const [isRequesterDepartmentOpen, setIsRequesterDepartmentOpen] = useState(false);
   const [isRequesterServiceOpen, setIsRequesterServiceOpen] = useState(false);
@@ -107,9 +113,7 @@ export function RequestForm() {
     defaultValues: {
       type: undefined,
       requester_name: "",
-      description: "",
-      quantity: 1,
-      unit: "UM",
+      items: [{ description: "", quantity: 1, unit: "UM" }], // Start with one empty item
       requester_direction_id: "",
       requester_department_id: "",
       requester_service_id: "",
@@ -123,17 +127,29 @@ export function RequestForm() {
     },
   });
 
+  // Use useFieldArray to manage the dynamic items array
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "items",
+  });
+
   // Fetch Directions
   const { data: directions = [], isLoading: isDirectionsLoading } = useQuery({
     queryKey: ["directions"],
-    queryFn: () => fetch("/api/equipment/directions").then((res) => res.json()),
+    queryFn: async () => {
+      const res = await fetch("/api/equipment/directions");
+      return res.json();
+    },
   });
 
   // Fetch Departments based on selected direction (Requester)
   const requesterDirectionId = form.watch("requester_direction_id");
   const { data: requesterDepartments = [], isLoading: isRequesterDepartmentsLoading } = useQuery({
     queryKey: ["requester_departments", requesterDirectionId],
-    queryFn: () => fetch(`/api/equipment/departments/${requesterDirectionId}`).then((res) => res.json()),
+    queryFn: async () => {
+      const res = await fetch(`/api/equipment/departments/${requesterDirectionId}`);
+      return res.json();
+    },
     enabled: !!requesterDirectionId,
   });
 
@@ -141,7 +157,10 @@ export function RequestForm() {
   const destinationDirectionId = form.watch("destination_direction_id");
   const { data: destinationDepartments = [], isLoading: isDestinationDepartmentsLoading } = useQuery({
     queryKey: ["destination_departments", destinationDirectionId],
-    queryFn: () => fetch(`/api/equipment/departments/${destinationDirectionId}`).then((res) => res.json()),
+    queryFn: async () => {
+      const res = await fetch(`/api/equipment/departments/${destinationDirectionId}`);
+      return res.json();
+    },
     enabled: !!destinationDirectionId,
   });
 
@@ -149,7 +168,10 @@ export function RequestForm() {
   const requesterDepartmentId = form.watch("requester_department_id");
   const { data: requesterServices = [], isLoading: isRequesterServicesLoading } = useQuery({
     queryKey: ["requester_services", requesterDirectionId, requesterDepartmentId],
-    queryFn: () => fetch(`/api/equipment/services?directionId=${requesterDirectionId || ""}&departmentId=${requesterDepartmentId || ""}`).then((res) => res.json()),
+    queryFn: async () => {
+      const res = await fetch(`/api/equipment/services?directionId=${requesterDirectionId || ""}&departmentId=${requesterDepartmentId || ""}`);
+      return res.json();
+    },
     enabled: !!requesterDirectionId || !!requesterDepartmentId,
   });
 
@@ -157,35 +179,50 @@ export function RequestForm() {
   const destinationDepartmentId = form.watch("destination_department_id");
   const { data: destinationServices = [], isLoading: isDestinationServicesLoading } = useQuery({
     queryKey: ["destination_services", destinationDirectionId, destinationDepartmentId],
-    queryFn: () => fetch(`/api/equipment/services?directionId=${destinationDirectionId || ""}&departmentId=${destinationDepartmentId || ""}`).then((res) => res.json()),
+    queryFn: async () => {
+      const res = await fetch(`/api/equipment/services?directionId=${destinationDirectionId || ""}&departmentId=${destinationDepartmentId || ""}`);
+      return res.json();
+    },
     enabled: !!destinationDirectionId || !!destinationDepartmentId,
   });
 
   // Fetch Sectors based on selected department (Requester)
   const { data: requesterSectors = [], isLoading: isRequesterSectorsLoading } = useQuery({
     queryKey: ["requester_sectors", requesterDepartmentId],
-    queryFn: () => fetch(`/api/equipment/sectors/${requesterDepartmentId}`).then((res) => res.json()),
+    queryFn: async () => {
+      const res = await fetch(`/api/equipment/sectors/${requesterDepartmentId}`);
+      return res.json();
+    },
     enabled: !!requesterDepartmentId,
   });
 
   // Fetch Sectors based on selected department (Destination)
   const { data: destinationSectors = [], isLoading: isDestinationSectorsLoading } = useQuery({
     queryKey: ["destination_sectors", destinationDepartmentId],
-    queryFn: () => fetch(`/api/equipment/sectors/${destinationDepartmentId}`).then((res) => res.json()),
+    queryFn: async () => {
+      const res = await fetch(`/api/equipment/sectors/${destinationDepartmentId}`);
+      return res.json();
+    },
     enabled: !!destinationDepartmentId,
   });
 
   // Fetch Repartitions based on selected department (Requester)
   const { data: requesterRepartitions = [], isLoading: isRequesterRepartitionsLoading } = useQuery({
     queryKey: ["requester_repartitions", requesterDepartmentId],
-    queryFn: () => fetch(`/api/equipment/repartitions/${requesterDepartmentId}`).then((res) => res.json()),
+    queryFn: async () => {
+      const res = await fetch(`/api/equipment/repartitions/${requesterDepartmentId}`);
+      return res.json();
+    },
     enabled: !!requesterDepartmentId,
   });
 
   // Fetch Repartitions based on selected department (Destination)
   const { data: destinationRepartitions = [], isLoading: isDestinationRepartitionsLoading } = useQuery({
     queryKey: ["destination_repartitions", destinationDepartmentId],
-    queryFn: () => fetch(`/api/equipment/repartitions/${destinationDepartmentId}`).then((res) => res.json()),
+    queryFn: async () => {
+      const res = await fetch(`/api/equipment/repartitions/${destinationDepartmentId}`);
+      return res.json();
+    },
     enabled: !!destinationDepartmentId,
   });
 
@@ -218,159 +255,213 @@ export function RequestForm() {
 
   const onSubmit = (values: RequestFormData) => {
     const formData = new FormData();
-    Object.entries(values).forEach(([key, value]) => {
-      if (value !== undefined) formData.append(key, value.toString());
-    });
+    // Add non-items fields to FormData
+    formData.append("type", values.type);
+    formData.append("requester_name", values.requester_name);
+    if (values.requester_direction_id) formData.append("requester_direction_id", values.requester_direction_id);
+    if (values.requester_department_id) formData.append("requester_department_id", values.requester_department_id);
+    if (values.requester_service_id) formData.append("requester_service_id", values.requester_service_id);
+    if (values.requester_sector_id) formData.append("requester_sector_id", values.requester_sector_id);
+    if (values.requester_repartition_id) formData.append("requester_repartition_id", values.requester_repartition_id);
+    if (values.destination_direction_id) formData.append("destination_direction_id", values.destination_direction_id);
+    if (values.destination_department_id) formData.append("destination_department_id", values.destination_department_id);
+    if (values.destination_service_id) formData.append("destination_service_id", values.destination_service_id);
+    if (values.destination_sector_id) formData.append("destination_sector_id", values.destination_sector_id);
+    if (values.destination_repartition_id) formData.append("destination_repartition_id", values.destination_repartition_id);
+
+    // Add items to FormData as a JSON string
+    formData.append("items", JSON.stringify(values.items));
 
     mutation.mutate(formData);
+  };
+
+  // Function to add a new item with a maximum limit
+  const MAX_ITEMS = 10;
+  const addNewItem = () => {
+    if (fields.length >= MAX_ITEMS) {
+      toast({
+        title: "Limite atingido",
+        description: `Você pode adicionar até ${MAX_ITEMS} itens.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    append({ description: "", quantity: 1, unit: "UM" });
+  };
+
+  // Function to remove an item with confirmation
+  const removeItemWithConfirmation = (index: number) => {
+    // if (confirm("Tem certeza de que deseja remover este item?")) {
+      remove(index);
+    // }
   };
 
   return (
     <TooltipProvider>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 border p-6 rounded-lg shadow">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-            <div>
-              <h1 className="text-2xl font-bold">SERVIÇO NACIONAL DE SAÚDE</h1>
-              <p className="text-sm">HOSPITAL CENTRAL DE MAPUTO</p>
-              <p className="text-sm">SERVIÇO DE ARMAZÉM</p>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-8 border p-4 sm:p-6 rounded-lg shadow-sm w-full max-w-7xl mx-auto"
+        >
+          {/* Header - Responsive Flexbox */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+            <div className="text-center sm:text-left">
+              <h1 className="text-xl sm:text-2xl font-bold">HOSPITAL CENTRAL DE MAPUTO</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">Gestão de Requisições</p>
             </div>
-            <div className="flex flex-col items-end">
-              <div className="flex items-center gap-2">
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem className="flex items-center gap-2">
-                      <FormLabel className="flex items-center gap-1">
-                        Tipo:
-                      </FormLabel>
-                      <FormControl>
-                        <div className="flex items-center gap-4">
-                          {typeOptions.map((option) => (
-                            <div key={option.value} className="flex items-center gap-1">
-                              <Checkbox
-                                checked={field.value === option.value}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    field.onChange(option.value);
-                                    form.trigger("type");
-                                  }
-                                }}
-                              />
-                              <span>{option.label}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+            <div className="w-full sm:w-auto flex flex-col items-center sm:items-end space-y-2">
+              {/* Type Selection */}
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col sm:flex-row items-center gap-2">
+                    <FormLabel className="text-xs sm:text-sm font-normal">Tipo:</FormLabel>
+                    <FormControl>
+                      <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+                        {typeOptions.map((option) => (
+                          <div key={option.value} className="flex items-center space-x-1">
+                            <Checkbox
+                              checked={field.value === option.value}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  field.onChange(option.value);
+                                  form.trigger("type");
+                                }
+                              }}
+                            />
+                            <span className="text-xs sm:text-sm">{option.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-xs absolute top-full mt-1" />
+                  </FormItem>
+                )}
+              />
+              <div className="flex flex-col sm:flex-row items-center gap-2 text-xs sm:text-sm">
+                <p>Requisição Nº: (Gerado automaticamente)</p>
+                <p>Data: {new Date().toLocaleDateString("pt-BR")}</p>
               </div>
-              <p className="text-sm mt-2">Requisição Nº: (Gerado automaticamente)</p>
-              <p className="text-sm">Data: {new Date().toLocaleDateString("pt-BR")}</p>
             </div>
           </div>
 
-          {/* Main Section: Item Details */}
-          <div className="mb-6">
-            <Table>
+          {/* Items Table - Enhanced Responsiveness */}
+          <div className="w-full overflow-x-auto">
+            <Table className="w-full">
               <TableHeader>
-                <TableRow>
-                  <TableHead>Designação e Característica</TableHead>
-                  <TableHead>Quantidade Solicitada</TableHead>
-                  <TableHead>Quantidade Fornecida</TableHead>
-                  <TableHead>Classificação Patrimonial</TableHead>
-                  <TableHead>Custo</TableHead>
+                <TableRow className="min-w-48">
+                  <TableHead className="text-xs sm:text-sm">
+                    Designação e Característica
+                  </TableHead>
+                  <TableHead className="text-xs sm:text-sm">
+                    Quantidade Solicitada
+                  </TableHead>
+                  <TableHead className="text-xs sm:text-sm">Acções</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow>
-                  <TableCell>
-                    <FormField
-                      control={form.control}
-                      name="description"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormControl>
-                            <Input
-                              placeholder="Digite a descrição do item"
-                              {...field}
-                              onBlur={() => form.trigger("description")}
-                              aria-required="true"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
+                {fields.map((item, index) => (
+                  <TableRow key={item.id} className="min-w-48">
+                    <TableCell>
+                      <div className="sm:hidden text-xs font-semibold mb-1">Descrição</div>
                       <FormField
                         control={form.control}
-                        name="quantity"
+                        name={`items.${index}.description`}
                         render={({ field }) => (
-                          <FormItem>
+                          <FormItem className="flex-3">
                             <FormControl>
-                              <Input
-                                type="number"
-                                placeholder="Quantidade"
+                              <Textarea
+                                placeholder="Descrição do item"
                                 {...field}
-                                value={field.value ?? ""}
-                                onChange={(e) => field.onChange(parseInt(e.target.value))}
-                                onBlur={() => form.trigger("quantity")}
-                                aria-required="true"
+                                className="w-full text-xs sm:text-sm h-24 sm:h-20 resize-y"
                               />
                             </FormControl>
-                            <FormMessage />
+                            <FormMessage className="text-xs" />
                           </FormItem>
                         )}
                       />
-                      <FormField
-                        control={form.control}
-                        name="unit"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormControl>
-                              <Input
-                                placeholder="Unidade (ex: UM)"
-                                {...field}
-                                onBlur={() => form.trigger("unit")}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Input disabled placeholder="A ser preenchido pelo destinatário" />
-                  </TableCell>
-                  <TableCell>
-                    <Input disabled placeholder="A ser preenchido pelo destinatário" />
-                  </TableCell>
-                  <TableCell>
-                    <Input disabled placeholder="A ser preenchido pelo destinatário" />
-                  </TableCell>
-                </TableRow>
+                    </TableCell>
+                    {/* Quantity and Unit - Responsive Flex */}
+                    <TableCell>
+                      <div className="sm:hidden text-xs font-semibold mb-1">Quantidade</div>
+                      <div className="flex space-x-2">
+                        <FormField
+                          control={form.control}
+                          name={`items.${index}.quantity`}
+                          render={({ field }) => (
+                            <FormItem className="flex-1">
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="Qtd"
+                                  {...field}
+                                  value={field.value ?? ""}
+                                  onChange={(e) => field.onChange(parseInt(e.target.value))}
+                                  className="w-full min-w-10 text-xs sm:text-sm"
+                                />
+                              </FormControl>
+                              <FormMessage className="text-xs" />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name={`items.${index}.unit`}
+                          render={({ field }) => (
+                            <FormItem className="flex-1">
+                              <FormControl>
+                                <Input
+                                  placeholder="Unid"
+                                  {...field}
+                                  className="w-full min-w-10 text-xs sm:text-sm"
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </TableCell>
+                    {/* Action Column */}
+                    <TableCell>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => removeItemWithConfirmation(index)}
+                        disabled={fields.length === 1}
+                        className="w-full sm:w-auto p-3 flex justify-center align-middle"
+                      >
+                        <Trash2 className="h-4 w-4" />
+
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           </div>
 
-          {/* Footer: Requester and Destination Details */}
+          {/* Add Item Button - Full Width on Mobile */}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={addNewItem}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Adicionar Item
+          </Button>
+
+          {/* Requester and Destination Details - Responsive Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Requester Details */}
             <div className="border p-4 rounded-lg">
               <h2 className="text-lg font-semibold mb-4">Solicitante</h2>
               <FormField
                 control={form.control}
                 name="requester_name"
                 render={({ field }) => (
-                  <FormItem className="mb-4">
+                  <FormItem className="mb-4 relative">
                     <FormLabel className="flex items-center gap-1">
                       <Hash className="h-4 w-4" />
                       Nome do Solicitante <span className="text-red-500">*</span>
@@ -386,10 +477,11 @@ export function RequestForm() {
                         placeholder="Digite seu nome"
                         {...field}
                         onBlur={() => form.trigger("requester_name")}
+                        className="sm:h-9 h-8 text-xs sm:text-sm w-full"
                         aria-required="true"
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-xs absolute top-full mt-1" />
                   </FormItem>
                 )}
               />
@@ -397,7 +489,7 @@ export function RequestForm() {
                 control={form.control}
                 name="requester_direction_id"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col mb-4">
+                  <FormItem className="flex flex-col mb-4 relative">
                     <FormLabel className="flex items-center gap-1">
                       <Hospital className="h-4 w-4" />
                       Direção (Solicitante)
@@ -408,7 +500,7 @@ export function RequestForm() {
                           <Button
                             variant="outline"
                             role="combobox"
-                            className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                            className={cn("w-full justify-between", !field.value && "text-muted-foreground sm:h-9 h-8 text-xs sm:text-sm")}
                             disabled={isDirectionsLoading}
                             aria-expanded={isRequesterDirectionOpen}
                             onClick={() => setIsRequesterDirectionOpen(true)}
@@ -423,7 +515,7 @@ export function RequestForm() {
                       </PopoverTrigger>
                       <PopoverContent className="w-full p-0">
                         <Command>
-                          <CommandInput placeholder="Pesquisar Direção..." />
+                          <CommandInput placeholder="Pesquisar Direção..." className="text-xs sm:text-sm sm:h-9 h-8" />
                           <CommandList>
                             <CommandEmpty>Nenhuma Direção encontrada.</CommandEmpty>
                             <CommandGroup>
@@ -436,6 +528,7 @@ export function RequestForm() {
                                     form.trigger("requester_direction_id");
                                     setIsRequesterDirectionOpen(false);
                                   }}
+                                  className="text-xs sm:text-sm"
                                 >
                                   <Check
                                     className={cn(
@@ -451,7 +544,7 @@ export function RequestForm() {
                         </Command>
                       </PopoverContent>
                     </Popover>
-                    <FormMessage />
+                    <FormMessage className="text-xs absolute top-full mt-1" />
                   </FormItem>
                 )}
               />
@@ -459,7 +552,7 @@ export function RequestForm() {
                 control={form.control}
                 name="requester_department_id"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col mb-4">
+                  <FormItem className="flex flex-col mb-4 relative">
                     <FormLabel className="flex items-center gap-1">
                       <Hospital className="h-4 w-4" />
                       Departamento (Solicitante)
@@ -470,7 +563,7 @@ export function RequestForm() {
                           <Button
                             variant="outline"
                             role="combobox"
-                            className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                            className={cn("w-full justify-between", !field.value && "text-muted-foreground sm:h-9 h-8 text-xs sm:text-sm")}
                             disabled={!requesterDirectionId || isRequesterDepartmentsLoading}
                             aria-expanded={isRequesterDepartmentOpen}
                             onClick={() => setIsRequesterDepartmentOpen(true)}
@@ -485,7 +578,7 @@ export function RequestForm() {
                       </PopoverTrigger>
                       <PopoverContent className="w-full p-0">
                         <Command>
-                          <CommandInput placeholder="Pesquisar Departamento..." />
+                          <CommandInput placeholder="Pesquisar Departamento..." className="text-xs sm:text-sm sm:h-9 h-8" />
                           <CommandList>
                             <CommandEmpty>Nenhum Departamento encontrado.</CommandEmpty>
                             <CommandGroup>
@@ -498,6 +591,7 @@ export function RequestForm() {
                                     form.trigger("requester_department_id");
                                     setIsRequesterDepartmentOpen(false);
                                   }}
+                                  className="text-xs sm:text-sm"
                                 >
                                   <Check
                                     className={cn(
@@ -513,7 +607,7 @@ export function RequestForm() {
                         </Command>
                       </PopoverContent>
                     </Popover>
-                    <FormMessage />
+                    <FormMessage className="text-xs absolute top-full mt-1" />
                   </FormItem>
                 )}
               />
@@ -521,7 +615,7 @@ export function RequestForm() {
                 control={form.control}
                 name="requester_service_id"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col mb-4">
+                  <FormItem className="flex flex-col mb-4 relative">
                     <FormLabel className="flex items-center gap-1">
                       <Hospital className="h-4 w-4" />
                       Serviço (Solicitante)
@@ -532,7 +626,7 @@ export function RequestForm() {
                           <Button
                             variant="outline"
                             role="combobox"
-                            className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                            className={cn("w-full justify-between", !field.value && "text-muted-foreground sm:h-9 h-8 text-xs sm:text-sm")}
                             disabled={isRequesterServicesLoading}
                             aria-expanded={isRequesterServiceOpen}
                             onClick={() => setIsRequesterServiceOpen(true)}
@@ -547,7 +641,7 @@ export function RequestForm() {
                       </PopoverTrigger>
                       <PopoverContent className="w-full p-0">
                         <Command>
-                          <CommandInput placeholder="Pesquisar Serviço..." />
+                          <CommandInput placeholder="Pesquisar Serviço..." className="text-xs sm:text-sm sm:h-9 h-8" />
                           <CommandList>
                             <CommandEmpty>Nenhum Serviço encontrado.</CommandEmpty>
                             <CommandGroup>
@@ -560,6 +654,7 @@ export function RequestForm() {
                                     form.trigger("requester_service_id");
                                     setIsRequesterServiceOpen(false);
                                   }}
+                                  className="text-xs sm:text-sm"
                                 >
                                   <Check
                                     className={cn(
@@ -575,7 +670,7 @@ export function RequestForm() {
                         </Command>
                       </PopoverContent>
                     </Popover>
-                    <FormMessage />
+                    <FormMessage className="text-xs absolute top-full mt-1" />
                   </FormItem>
                 )}
               />
@@ -583,7 +678,7 @@ export function RequestForm() {
                 control={form.control}
                 name="requester_sector_id"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col mb-4">
+                  <FormItem className="flex flex-col mb-4 relative">
                     <FormLabel className="flex items-center gap-1">
                       <Hospital className="h-4 w-4" />
                       Setor (Solicitante)
@@ -594,7 +689,7 @@ export function RequestForm() {
                           <Button
                             variant="outline"
                             role="combobox"
-                            className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                            className={cn("w-full justify-between", !field.value && "text-muted-foreground sm:h-9 h-8 text-xs sm:text-sm")}
                             disabled={!requesterDepartmentId || isRequesterSectorsLoading}
                             aria-expanded={isRequesterSectorOpen}
                             onClick={() => setIsRequesterSectorOpen(true)}
@@ -609,7 +704,7 @@ export function RequestForm() {
                       </PopoverTrigger>
                       <PopoverContent className="w-full p-0">
                         <Command>
-                          <CommandInput placeholder="Pesquisar Setor..." />
+                          <CommandInput placeholder="Pesquisar Setor..." className="text-xs sm:text-sm sm:h-9 h-8" />
                           <CommandList>
                             <CommandEmpty>Nenhum Setor encontrado.</CommandEmpty>
                             <CommandGroup>
@@ -622,6 +717,7 @@ export function RequestForm() {
                                     form.trigger("requester_sector_id");
                                     setIsRequesterSectorOpen(false);
                                   }}
+                                  className="text-xs sm:text-sm"
                                 >
                                   <Check
                                     className={cn(
@@ -637,7 +733,7 @@ export function RequestForm() {
                         </Command>
                       </PopoverContent>
                     </Popover>
-                    <FormMessage />
+                    <FormMessage className="text-xs absolute top-full mt-1" />
                   </FormItem>
                 )}
               />
@@ -645,7 +741,7 @@ export function RequestForm() {
                 control={form.control}
                 name="requester_repartition_id"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col mb-4">
+                  <FormItem className="flex flex-col mb-4 relative">
                     <FormLabel className="flex items-center gap-1">
                       <Hospital className="h-4 w-4" />
                       Repartição (Solicitante)
@@ -656,7 +752,7 @@ export function RequestForm() {
                           <Button
                             variant="outline"
                             role="combobox"
-                            className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                            className={cn("w-full justify-between", !field.value && "text-muted-foreground sm:h-9 h-8 text-xs sm:text-sm")}
                             disabled={!requesterDepartmentId || isRequesterRepartitionsLoading}
                             aria-expanded={isRequesterRepartitionOpen}
                             onClick={() => setIsRequesterRepartitionOpen(true)}
@@ -671,7 +767,7 @@ export function RequestForm() {
                       </PopoverTrigger>
                       <PopoverContent className="w-full p-0">
                         <Command>
-                          <CommandInput placeholder="Pesquisar Repartição..." />
+                          <CommandInput placeholder="Pesquisar Repartição..." className="text-xs sm:text-sm sm:h-9 h-8" />
                           <CommandList>
                             <CommandEmpty>Nenhuma Repartição encontrada.</CommandEmpty>
                             <CommandGroup>
@@ -684,6 +780,7 @@ export function RequestForm() {
                                     form.trigger("requester_repartition_id");
                                     setIsRequesterRepartitionOpen(false);
                                   }}
+                                  className="text-xs sm:text-sm"
                                 >
                                   <Check
                                     className={cn(
@@ -699,7 +796,7 @@ export function RequestForm() {
                         </Command>
                       </PopoverContent>
                     </Popover>
-                    <FormMessage />
+                    <FormMessage className="text-xs absolute top-full mt-1" />
                   </FormItem>
                 )}
               />
@@ -712,7 +809,7 @@ export function RequestForm() {
                 control={form.control}
                 name="destination_direction_id"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col mb-4">
+                  <FormItem className="flex flex-col mb-4 relative">
                     <FormLabel className="flex items-center gap-1">
                       <Hospital className="h-4 w-4" />
                       Direção (Destinatário)
@@ -723,7 +820,7 @@ export function RequestForm() {
                           <Button
                             variant="outline"
                             role="combobox"
-                            className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                            className={cn("w-full justify-between", !field.value && "text-muted-foreground sm:h-9 h-8 text-xs sm:text-sm")}
                             disabled={isDirectionsLoading}
                             aria-expanded={isDestinationDirectionOpen}
                             onClick={() => setIsDestinationDirectionOpen(true)}
@@ -738,7 +835,7 @@ export function RequestForm() {
                       </PopoverTrigger>
                       <PopoverContent className="w-full p-0">
                         <Command>
-                          <CommandInput placeholder="Pesquisar Direção..." />
+                          <CommandInput placeholder="Pesquisar Direção..." className="text-xs sm:text-sm sm:h-9 h-8" />
                           <CommandList>
                             <CommandEmpty>Nenhuma Direção encontrada.</CommandEmpty>
                             <CommandGroup>
@@ -751,6 +848,7 @@ export function RequestForm() {
                                     form.trigger("destination_direction_id");
                                     setIsDestinationDirectionOpen(false);
                                   }}
+                                  className="text-xs sm:text-sm"
                                 >
                                   <Check
                                     className={cn(
@@ -766,7 +864,7 @@ export function RequestForm() {
                         </Command>
                       </PopoverContent>
                     </Popover>
-                    <FormMessage />
+                    <FormMessage className="text-xs absolute top-full mt-1" />
                   </FormItem>
                 )}
               />
@@ -774,7 +872,7 @@ export function RequestForm() {
                 control={form.control}
                 name="destination_department_id"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col mb-4">
+                  <FormItem className="flex flex-col mb-4 relative">
                     <FormLabel className="flex items-center gap-1">
                       <Hospital className="h-4 w-4" />
                       Departamento (Destinatário)
@@ -785,7 +883,7 @@ export function RequestForm() {
                           <Button
                             variant="outline"
                             role="combobox"
-                            className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                            className={cn("w-full justify-between", !field.value && "text-muted-foreground sm:h-9 h-8 text-xs sm:text-sm")}
                             disabled={!destinationDirectionId || isDestinationDepartmentsLoading}
                             aria-expanded={isDestinationDepartmentOpen}
                             onClick={() => setIsDestinationDepartmentOpen(true)}
@@ -800,7 +898,7 @@ export function RequestForm() {
                       </PopoverTrigger>
                       <PopoverContent className="w-full p-0">
                         <Command>
-                          <CommandInput placeholder="Pesquisar Departamento..." />
+                          <CommandInput placeholder="Pesquisar Departamento..." className="text-xs sm:text-sm sm:h-9 h-8" />
                           <CommandList>
                             <CommandEmpty>Nenhum Departamento encontrado.</CommandEmpty>
                             <CommandGroup>
@@ -813,6 +911,7 @@ export function RequestForm() {
                                     form.trigger("destination_department_id");
                                     setIsDestinationDepartmentOpen(false);
                                   }}
+                                  className="text-xs sm:text-sm"
                                 >
                                   <Check
                                     className={cn(
@@ -828,7 +927,7 @@ export function RequestForm() {
                         </Command>
                       </PopoverContent>
                     </Popover>
-                    <FormMessage />
+                    <FormMessage className="text-xs absolute top-full mt-1" />
                   </FormItem>
                 )}
               />
@@ -836,7 +935,7 @@ export function RequestForm() {
                 control={form.control}
                 name="destination_service_id"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col mb-4">
+                  <FormItem className="flex flex-col mb-4 relative">
                     <FormLabel className="flex items-center gap-1">
                       <Hospital className="h-4 w-4" />
                       Serviço (Destinatário)
@@ -847,7 +946,7 @@ export function RequestForm() {
                           <Button
                             variant="outline"
                             role="combobox"
-                            className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                            className={cn("w-full justify-between", !field.value && "text-muted-foreground sm:h-9 h-8 text-xs sm:text-sm")}
                             disabled={isDestinationServicesLoading}
                             aria-expanded={isDestinationServiceOpen}
                             onClick={() => setIsDestinationServiceOpen(true)}
@@ -862,7 +961,7 @@ export function RequestForm() {
                       </PopoverTrigger>
                       <PopoverContent className="w-full p-0">
                         <Command>
-                          <CommandInput placeholder="Pesquisar Serviço..." />
+                          <CommandInput placeholder="Pesquisar Serviço..." className="text-xs sm:text-sm sm:h-9 h-8" />
                           <CommandList>
                             <CommandEmpty>Nenhum Serviço encontrado.</CommandEmpty>
                             <CommandGroup>
@@ -875,6 +974,7 @@ export function RequestForm() {
                                     form.trigger("destination_service_id");
                                     setIsDestinationServiceOpen(false);
                                   }}
+                                  className="text-xs sm:text-sm"
                                 >
                                   <Check
                                     className={cn(
@@ -890,7 +990,7 @@ export function RequestForm() {
                         </Command>
                       </PopoverContent>
                     </Popover>
-                    <FormMessage />
+                    <FormMessage className="text-xs absolute top-full mt-1" />
                   </FormItem>
                 )}
               />
@@ -898,7 +998,7 @@ export function RequestForm() {
                 control={form.control}
                 name="destination_sector_id"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col mb-4">
+                  <FormItem className="flex flex-col mb-4 relative">
                     <FormLabel className="flex items-center gap-1">
                       <Hospital className="h-4 w-4" />
                       Setor (Destinatário)
@@ -909,7 +1009,7 @@ export function RequestForm() {
                           <Button
                             variant="outline"
                             role="combobox"
-                            className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                            className={cn("w-full justify-between", !field.value && "text-muted-foreground sm:h-9 h-8 text-xs sm:text-sm")}
                             disabled={!destinationDepartmentId || isDestinationSectorsLoading}
                             aria-expanded={isDestinationSectorOpen}
                             onClick={() => setIsDestinationSectorOpen(true)}
@@ -924,7 +1024,7 @@ export function RequestForm() {
                       </PopoverTrigger>
                       <PopoverContent className="w-full p-0">
                         <Command>
-                          <CommandInput placeholder="Pesquisar Setor..." />
+                          <CommandInput placeholder="Pesquisar Setor..." className="text-xs sm:text-sm sm:h-9 h-8" />
                           <CommandList>
                             <CommandEmpty>Nenhum Setor encontrado.</CommandEmpty>
                             <CommandGroup>
@@ -937,6 +1037,7 @@ export function RequestForm() {
                                     form.trigger("destination_sector_id");
                                     setIsDestinationSectorOpen(false);
                                   }}
+                                  className="text-xs sm:text-sm"
                                 >
                                   <Check
                                     className={cn(
@@ -952,7 +1053,7 @@ export function RequestForm() {
                         </Command>
                       </PopoverContent>
                     </Popover>
-                    <FormMessage />
+                    <FormMessage className="text-xs absolute top-full mt-1" />
                   </FormItem>
                 )}
               />
@@ -960,7 +1061,7 @@ export function RequestForm() {
                 control={form.control}
                 name="destination_repartition_id"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col mb-4">
+                  <FormItem className="flex flex-col mb-4 relative">
                     <FormLabel className="flex items-center gap-1">
                       <Hospital className="h-4 w-4" />
                       Repartição (Destinatário)
@@ -971,7 +1072,7 @@ export function RequestForm() {
                           <Button
                             variant="outline"
                             role="combobox"
-                            className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
+                            className={cn("w-full justify-between", !field.value && "text-muted-foreground sm:h-9 h-8 text-xs sm:text-sm")}
                             disabled={!destinationDepartmentId || isDestinationRepartitionsLoading}
                             aria-expanded={isDestinationRepartitionOpen}
                             onClick={() => setIsDestinationRepartitionOpen(true)}
@@ -986,7 +1087,7 @@ export function RequestForm() {
                       </PopoverTrigger>
                       <PopoverContent className="w-full p-0">
                         <Command>
-                          <CommandInput placeholder="Pesquisar Repartição..." />
+                          <CommandInput placeholder="Pesquisar Repartição..." className="text-xs sm:text-sm sm:h-9 h-8" />
                           <CommandList>
                             <CommandEmpty>Nenhuma Repartição encontrada.</CommandEmpty>
                             <CommandGroup>
@@ -999,6 +1100,7 @@ export function RequestForm() {
                                     form.trigger("destination_repartition_id");
                                     setIsDestinationRepartitionOpen(false);
                                   }}
+                                  className="text-xs sm:text-sm"
                                 >
                                   <Check
                                     className={cn(
@@ -1014,22 +1116,10 @@ export function RequestForm() {
                         </Command>
                       </PopoverContent>
                     </Popover>
-                    <FormMessage />
+                    <FormMessage className="text-xs absolute top-full mt-1" />
                   </FormItem>
                 )}
               />
-            </div>
-          </div>
-
-          {/* Signature Fields (Optional, for Display Purposes) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <div>
-              <FormLabel className="block mb-2">Requisitado por:</FormLabel>
-              <Input disabled placeholder="Assinatura do Solicitante (a ser preenchida manualmente)" />
-            </div>
-            <div>
-              <FormLabel className="block mb-2">Recebido por:</FormLabel>
-              <Input disabled placeholder="Assinatura do Destinatário (a ser preenchida manualmente)" />
             </div>
           </div>
 
@@ -1040,8 +1130,8 @@ export function RequestForm() {
               {form.formState.errors.root.message}
             </p>
           )}
-          <div className="flex justify-end">
-            <Button type="submit" disabled={mutation.isPending}>
+          <div className="flex justify-end mt-4">
+            <Button type="submit" disabled={mutation.isPending} className="sm:h-9 h-8 text-xs sm:text-sm w-full sm:w-auto">
               {mutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

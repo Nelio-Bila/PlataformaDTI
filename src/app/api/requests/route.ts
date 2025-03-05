@@ -21,7 +21,7 @@ export async function GET(request: Request) {
 
   if (!userId) {
     return NextResponse.json(
-      { error: "Usuário não autenticado. Você deve estar logado para visualizar requisições." },
+      { error: "Utilizador não autenticado. Você deve estar logado para visualizar requisições." },
       { status: 401 }
     );
   }

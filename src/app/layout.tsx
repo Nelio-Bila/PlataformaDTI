@@ -6,6 +6,7 @@ import type { Metadata, Viewport } from "next";
 import { Poppins } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
+import { IdleTimeout } from "@/components/IdleTimeout";
 
 export const viewport: Viewport = {
   // Optional: Add theme-color for mobile browsers
@@ -65,6 +66,7 @@ export default async function RootLayout({
             easing="ease"
             speed={300}
             shadow="0 0 10px #005DB2,0 0 5px #005DB2" />
+          <IdleTimeout />
           {children}
           <Toaster />
         </Providers>

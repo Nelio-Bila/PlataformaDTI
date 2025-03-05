@@ -31,7 +31,7 @@ export async function POST(req: Request) {
         // Check if user is authenticated
         if (!userId) {
             return NextResponse.json(
-                { success: false, error: "Usuário não autenticado. Você deve estar logado para registrar um equipamento." },
+                { success: false, error: "Utilizador não autenticado. Você deve estar logado para registrar um equipamento." },
                 { status: 401 }
             );
         }
@@ -128,7 +128,7 @@ export async function POST(req: Request) {
             console.error("Prisma error:", error.message, error.code, error.meta);
             if (error.code === "P2003") {
                 return NextResponse.json(
-                    { success: false, error: "Violação de chave estrangeira: Usuário não encontrado." },
+                    { success: false, error: "Violação de chave estrangeira: Utilizador não encontrado." },
                     { status: 400 }
                 );
             }

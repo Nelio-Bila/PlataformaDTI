@@ -3,6 +3,7 @@
 
 import TableFilter from "@/components/datatable/table-filter";
 import TableSortHeader from "@/components/datatable/table-sort-header";
+import RequestClientSkeleton from "@/components/skeletons/request-client-skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -181,6 +182,22 @@ export function RequestClient() {
     },
   });
 
+  // Define Portuguese mappings
+  const requestTypeLabels: Record<string, string> = {
+    REQUISITION: "Requisição",
+    RETURN: "Devolução",
+    SUBSTITUTION: "Substituição",
+  };
+
+  const requestStatusLabels: Record<string, string> = {
+    PENDING: "Pendente",
+    APPROVED: "Aprovado",
+    REJECTED: "Rejeitado",
+    IN_PROGRESS: "Em Progresso",
+    COMPLETED: "Concluído",
+    CANCELLED: "Cancelado",
+  };
+
   const columns = useMemo<ColumnDef<Request>[]>(
     () => [
       {
@@ -239,7 +256,7 @@ export function RequestClient() {
             }}
           />
         ),
-        cell: ({ row }) => row.getValue("type"),
+        cell: ({ row }) => requestTypeLabels[row.getValue("type") as string] || row.getValue("type"),
       },
       {
         accessorFn: (row) => row.status,
@@ -259,7 +276,7 @@ export function RequestClient() {
             }}
           />
         ),
-        cell: ({ row }) => row.getValue("status"),
+        cell: ({ row }) => requestStatusLabels[row.getValue("status") as string] || row.getValue("status"),
       },
       {
         accessorFn: (row) => row.requester_name || row.requester?.name,
@@ -537,7 +554,7 @@ export function RequestClient() {
   }, [table, columnVisibility]);
 
   if (isAuthenticated === null) {
-    return <div>Carregando...</div>;
+    return ( <RequestClientSkeleton />);
   }
 
   if (!isAuthenticated) {
@@ -553,7 +570,7 @@ export function RequestClient() {
   }
 
   if (isRequestLoading || isFilterLoading) {
-    return <div>Carregando...</div>;
+    return ( <RequestClientSkeleton />);
   }
 
   if (requestError) {
