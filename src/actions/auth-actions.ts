@@ -56,23 +56,58 @@ export async function create_user(data: {
 
 
 
+// export async function login(email?: string, password?: string) {
+//   // Type guard to ensure email and password are strings
+//   if (!email || !password) return null;
+
+//   const user = await db.user.findUnique({
+//     where: { email: email }, // Now TypeScript knows email is a string
+//   });
+
+//   if (!user || !user.password) return null;
+
+//   const is_valid = await compare(password, user.password); // Fixed async issue
+//   if (!is_valid) return null;
+
+//   return { id: user.id, name: user.name, email: user.email };
+// }
+
+
 export async function login(email?: string, password?: string) {
-  // Type guard to ensure email and password are strings
   if (!email || !password) return null;
 
   const user = await db.user.findUnique({
-    where: { email: email }, // Now TypeScript knows email is a string
+    where: { email: email },
+    include: {
+      groups: {
+        include: {
+          group: {
+            include: {
+              permissions: {
+                include: { permission: true },
+              },
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!user || !user.password) return null;
 
-  const is_valid = await compare(password, user.password); // Fixed async issue
+  const is_valid = await compare(password, user.password);
   if (!is_valid) return null;
 
-  return { id: user.id, name: user.name, email: user.email };
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    groups: user.groups.map(ug => ({
+      name: ug.group.name,
+      permissions: ug.group.permissions.map(gp => gp.permission.name),
+    })),
+  };
 }
-
-
 
 
 export async function update_password(

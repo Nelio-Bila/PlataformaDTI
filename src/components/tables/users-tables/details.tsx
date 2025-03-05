@@ -54,10 +54,7 @@ export function UserDetails({ user }: UserDetailsProps) {
             <p className="text-sm font-medium">Atualizado em:</p>
             <p>{new Date(user.updated_at).toLocaleDateString("pt-BR")}</p>
           </div>
-          <div>
-            <p className="text-sm font-medium">Email Verificado:</p>
-            <p>{user.emailVerified ? new Date(user.emailVerified).toLocaleDateString("pt-BR") : "Não verificado"}</p>
-          </div>
+
         </div>
       </div>
 

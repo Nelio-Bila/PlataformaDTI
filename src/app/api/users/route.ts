@@ -1,7 +1,9 @@
 // src/app/api/users/route.ts
+
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { hash } from "bcryptjs";
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -50,21 +52,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { name, email, groupIds } = await request.json();
+  const { name, email, password, groupIds } = await request.json();
 
   try {
+    // Hash the password before saving
+    const hashedPassword = await hash(password, 10);
+
     const user = await db.user.create({
       data: {
         name,
         email,
-        groups: {
-          create: groupIds.map((groupId: string) => ({
-            group_id: groupId,
-          })),
-        },
+        password: hashedPassword,
+        groups: groupIds && groupIds.length > 0
+          ? {
+              create: groupIds.map((groupId: string) => ({
+                group_id: groupId,
+              })),
+            }
+          : undefined,
       },
       include: { groups: { include: { group: true } } },
     });
+
     return NextResponse.json(user, { status: 201 });
   } catch (error) {
     console.error("Error creating user:", error);

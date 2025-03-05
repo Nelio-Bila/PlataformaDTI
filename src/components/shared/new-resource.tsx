@@ -14,8 +14,8 @@ export default function NewResource() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="default">
-          <Icons.packagePlus className="h-5 w-5 me-2 text-white" />{" "}
-          <span className="text-white">Novo</span>
+          <Icons.packagePlus className="h-5 w-5 me-1 text-white" />{" "}
+          <span className="text-white">Registrar</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56">
@@ -30,7 +30,14 @@ export default function NewResource() {
           </DropdownMenuItem>
 
           <DropdownMenuItem asChild>
-            <Link href="/users/new" className="flex flex-row">
+            <Link href="/requests/add" className="flex flex-row">
+              <Icons.fileText className="mr-2 h-4 w-4" />
+              <span>Requisição</span>
+            </Link>
+          </DropdownMenuItem>
+
+          <DropdownMenuItem asChild>
+            <Link href="/users/add" className="flex flex-row">
               <Icons.user className="mr-2 h-4 w-4" />
               <span>Utilizador</span>
             </Link>

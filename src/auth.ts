@@ -111,7 +111,6 @@ export const {
       if (token.user) {
         session.user = token.user as AdapterUser & SafeUserType;
       }
-      // Use type assertion to force expires as string if necessary
       session.expires = new Date(Date.now() + 15 * 60 * 1000).toISOString() as any; // Temporary workaround
       return session;
     },
@@ -121,14 +120,13 @@ export const {
         token.iat = Math.floor(Date.now() / 1000);
         token.exp = Math.floor(Date.now() / 1000) + 15 * 60;
       }
-
       if (token.exp && Date.now() / 1000 > token.exp) {
         return null;
       }
-
       return token;
     },
   },
+
 });
 
 // Type augmentations for NextAuth
@@ -138,7 +136,7 @@ declare module "next-auth" {
     expires: string; // Explicitly a string
   }
 
-  interface User extends SafeUserType {}
+  interface User extends SafeUserType { }
 
   interface JWT {
     user?: SafeUserType;
