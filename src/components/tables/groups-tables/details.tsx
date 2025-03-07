@@ -50,7 +50,7 @@ export function GroupDetails({ group }: GroupDetailsProps) {
             <p>{new Date(group.created_at).toLocaleDateString("pt-BR")}</p>
           </div>
           <div>
-            <p className="text-sm font-medium">Atualizado em:</p>
+            <p className="text-sm font-medium">Actualizado em:</p>
             <p>{new Date(group.updated_at).toLocaleDateString("pt-BR")}</p>
           </div>
         </div>

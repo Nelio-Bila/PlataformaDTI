@@ -2,16 +2,16 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
+import { Group, Request, User, UserGroup } from "@prisma/client";
 import { Edit, Package, Users } from "lucide-react";
 import Link from "next/link";
-import { User, UserGroup, Group, Request } from "@prisma/client";
 
 interface UserDetailsProps {
   user: User & {
@@ -51,7 +51,7 @@ export function UserDetails({ user }: UserDetailsProps) {
             <p>{new Date(user.created_at).toLocaleDateString("pt-BR")}</p>
           </div>
           <div>
-            <p className="text-sm font-medium">Atualizado em:</p>
+            <p className="text-sm font-medium">Actualizado em:</p>
             <p>{new Date(user.updated_at).toLocaleDateString("pt-BR")}</p>
           </div>
 
