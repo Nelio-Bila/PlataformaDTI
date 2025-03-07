@@ -35,7 +35,7 @@ export default function LoginPage() {
           <SignInForm />
         </div>
         {/* REQUEST HALF */}
-        <div className="md:px-15 px-5 bg-muted rounded-lg w-full lg:w-1/2 flex flex-col justify-center">
+        <div className="md:px-15 p-5 bg-muted rounded-lg w-full lg:w-1/2 flex flex-col justify-center">
           <RequestOptionsForm />
         </div>
       </div>

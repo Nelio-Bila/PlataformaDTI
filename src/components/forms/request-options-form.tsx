@@ -51,8 +51,8 @@ export function RequestOptionsForm() {
 
     return (
         <>
-            <h1 className="text-center font-bold text-2xl">Requisições</h1>
-        <div className="mt-8">
+            <h1 className="text-center font-bold text-2xl mt-4">Requisições</h1>
+        <div className="my-8">
             <p className="text-center text-sm text-gray-600 dark:text-gray-300 mb-4">
                 Não tem conta? Use as opções abaixo como convidado:
             </p>
