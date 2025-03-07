@@ -270,15 +270,15 @@ async function main() {
             { name: "permission:delete", description: "Permissão para excluir permissões" },
 
             // Request Permissions
-            { name: "request:read", description: "Permissão para visualizar todas as solicitações (Admins)" },
-            { name: "request:create", description: "Permissão para criar solicitações (Todos)" },
-            { name: "request:update", description: "Permissão para atualizar solicitações (Admins)" },
-            { name: "request:delete", description: "Permissão para excluir solicitações (Admins)" },
-            { name: "request:owner:read", description: "Permissão para visualizar próprias solicitações emitidas" },
-            { name: "request:owner:update", description: "Permissão para atualizar próprias solicitações emitidas" },
-            { name: "request:owner:delete", description: "Permissão para excluir próprias solicitações emitidas" },
-            { name: "request:destination:read", description: "Permissão para visualizar solicitações recebidas" },
-            { name: "request:approve", description: "Permissão para aprovar solicitações (Admins)" },
+            { name: "request:read", description: "Permissão para visualizar todas as requisições (Admins)" },
+            { name: "request:create", description: "Permissão para criar requisições (Todos)" },
+            { name: "request:update", description: "Permissão para atualizar requisições (Admins)" },
+            { name: "request:delete", description: "Permissão para excluir requisições (Admins)" },
+            { name: "request:owner:read", description: "Permissão para visualizar próprias requisições emitidas" },
+            { name: "request:owner:update", description: "Permissão para atualizar próprias requisições emitidas" },
+            { name: "request:owner:delete", description: "Permissão para excluir próprias requisições emitidas" },
+            { name: "request:destination:read", description: "Permissão para visualizar requisições recebidas" },
+            { name: "request:approve", description: "Permissão para aprovar requisições (Admins)" },
 
             // Equipment Permissions (Admins and Tecnologias de Informação only)
             { name: "equipment:read", description: "Permissão para visualizar equipamentos" },

@@ -53,6 +53,7 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import { BadgeAlertIcon, BadgeCheckIcon, Clock, Columns, Edit, Eye, FilterX, Hospital, Loader2, MoreHorizontal, Package, PackagePlus, RefreshCw, Sheet, Trash, Trash2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -69,6 +70,7 @@ interface FilterOption {
 export function EquipmentClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session, status } = useSession();
 
   const initialState = useMemo(
     () => ({
@@ -112,6 +114,10 @@ export function EquipmentClient() {
     actions: true,
   });
 
+  // Check permissions from session
+  const userGroups = session?.user?.groups || [];
+  const hasEquipmentReadPermission = userGroups.some(group => group.permissions.includes("equipment:read"));
+
   // Fetch equipment data
   const { data: equipmentData, isLoading: isEquipmentLoading, error: equipmentError, refetch } = useQuery({
     queryKey: ["equipment", pageIndex, pageSize, sorting, globalFilter, filters],
@@ -128,9 +134,13 @@ export function EquipmentClient() {
         ...(filters.department_id.length > 0 && { department_id: filters.department_id.join(",") }),
       });
       const response = await fetch(`/api/equipment?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch equipment");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to fetch equipment");
+      }
       return response.json() as Promise<{ data: Equipment[]; total: number }>;
     },
+    enabled: status === "authenticated" && hasEquipmentReadPermission,
   });
 
   // Fetch filter options
@@ -141,6 +151,7 @@ export function EquipmentClient() {
       if (!response.ok) throw new Error("Failed to fetch filter options");
       return response.json() as Promise<FilterOptions>;
     },
+    enabled: status === "authenticated" && hasEquipmentReadPermission,
   });
 
   // Delete mutation
@@ -384,14 +395,12 @@ export function EquipmentClient() {
     []
   );
 
-  // Define equipment type options (assuming these are fetched dynamically)
   const equipmentTypeOptions: FilterOption[] = (filterOptions?.types || []).map((type) => ({
     value: type,
     label: type,
     icon: ({ className }) => <Package className={className} />,
   }));
 
-  // Define equipment status options (assuming these are fetched dynamically)
   const equipmentStatusOptions: FilterOption[] = (filterOptions?.statuses || []).map((status) => ({
     value: status,
     label: status,
@@ -409,14 +418,12 @@ export function EquipmentClient() {
     },
   }));
 
-  // Define direction options
   const directionOptions: FilterOption[] = (filterOptions?.directions || []).map((direction) => ({
     value: direction.id,
     label: direction.name,
     icon: ({ className }) => <Hospital className={className} />,
   }));
 
-  // Define department options (filtered by selected directions)
   const departmentOptions: FilterOption[] = (filterOptions?.departments || [])
     .filter(
       (department) =>
@@ -510,8 +517,29 @@ export function EquipmentClient() {
     XLSX.writeFile(workbook, `exportacao_equipamentos_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }, [table, columnVisibility]);
 
-  if (isEquipmentLoading || isFilterLoading) {
+  if (status === "loading" || isEquipmentLoading || isFilterLoading) {
     return <EquipmentClientSkeleton />;
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-bold text-red-600">Acesso Negado</h1>
+        <p>Você precisa estar logado para visualizar os Equipamentos.</p>
+        <Link href="/api/auth/signin">
+          <Button className="mt-4">Fazer Login</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  if (!hasEquipmentReadPermission) {
+    return (
+      <div className="p-6">
+        <h1 className="text-2xl font-bold text-red-600">Acesso Negado</h1>
+        <p>Você não tem permissão para visualizar os Equipamentos.</p>
+      </div>
+    );
   }
 
   if (equipmentError) {
@@ -601,96 +629,96 @@ export function EquipmentClient() {
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:space-x-2 flex-wrap">
-  <TableFilter
-    title="Tipo"
-    filter="type"
-    options={equipmentTypeOptions}
-    params={{
-      filters: Object.entries(filters).flatMap(([key, values]) =>
-        values.map((value: string) => `${key}:${value}`)
-      ),
-    }}
-    setParams={(newParams: { filters: string[] }) => {
-      const typeFilters = newParams.filters
-        .filter((f) => f.startsWith("type:"))
-        .map((f) => f.split(":")[1]);
-      setFilters((prev) => ({ ...prev, type: typeFilters }));
-      setPageIndex(0);
-      refetch();
-    }}
-    setTimeDebounce={() => {}}
-  />
-  <TableFilter
-    title="Status"
-    filter="status"
-    options={equipmentStatusOptions}
-    params={{
-      filters: Object.entries(filters).flatMap(([key, values]) =>
-        values.map((value: string) => `${key}:${value}`)
-      ),
-    }}
-    setParams={(newParams: { filters: string[] }) => {
-      const statusFilters = newParams.filters
-        .filter((f) => f.startsWith("status:"))
-        .map((f) => f.split(":")[1]);
-      setFilters((prev) => ({ ...prev, status: statusFilters }));
-      setPageIndex(0);
-      refetch();
-    }}
-    setTimeDebounce={() => {}}
-  />
-  <TableFilter
-    title="Direção"
-    filter="direction_id"
-    options={directionOptions}
-    params={{
-      filters: Object.entries(filters).flatMap(([key, values]) =>
-        values.map((value: string) => `${key}:${value}`)
-      ),
-    }}
-    setParams={(newParams: { filters: string[] }) => {
-      const directionFilters = newParams.filters
-        .filter((f) => f.startsWith("direction_id:"))
-        .map((f) => f.split(":")[1]);
-      setFilters((prev) => ({
-        ...prev,
-        direction_id: directionFilters,
-        department_id: directionFilters.length === 0 ? [] : prev.department_id,
-      }));
-      setPageIndex(0);
-      refetch();
-    }}
-    setTimeDebounce={() => {}}
-  />
-  <TableFilter
-    title="Departamento"
-    filter="department_id"
-    options={departmentOptions}
-    params={{
-      filters: Object.entries(filters).flatMap(([key, values]) =>
-        values.map((value: string) => `${key}:${value}`)
-      ),
-    }}
-    setParams={(newParams: { filters: string[] }) => {
-      const departmentFilters = newParams.filters
-        .filter((f) => f.startsWith("department_id:"))
-        .map((f) => f.split(":")[1]);
-      setFilters((prev) => ({ ...prev, department_id: departmentFilters }));
-      setPageIndex(0);
-      refetch();
-    }}
-    setTimeDebounce={() => {}}
-  />
-  <Button
-    variant="outline"
-    size="sm"
-    onClick={resetFilters}
-    className="w-full md:w-auto h-8 border-dashed border-gray-400 text-xs hover:bg-gray-200/50 dark:text-white flex gap-2"
-  >
-    <FilterX />
-    <span>Limpar Filtros</span>
-  </Button>
-</div>
+        <TableFilter
+          title="Tipo"
+          filter="type"
+          options={equipmentTypeOptions}
+          params={{
+            filters: Object.entries(filters).flatMap(([key, values]) =>
+              values.map((value: string) => `${key}:${value}`)
+            ),
+          }}
+          setParams={(newParams: { filters: string[] }) => {
+            const typeFilters = newParams.filters
+              .filter((f) => f.startsWith("type:"))
+              .map((f) => f.split(":")[1]);
+            setFilters((prev) => ({ ...prev, type: typeFilters }));
+            setPageIndex(0);
+            refetch();
+          }}
+          setTimeDebounce={() => {}}
+        />
+        <TableFilter
+          title="Status"
+          filter="status"
+          options={equipmentStatusOptions}
+          params={{
+            filters: Object.entries(filters).flatMap(([key, values]) =>
+              values.map((value: string) => `${key}:${value}`)
+            ),
+          }}
+          setParams={(newParams: { filters: string[] }) => {
+            const statusFilters = newParams.filters
+              .filter((f) => f.startsWith("status:"))
+              .map((f) => f.split(":")[1]);
+            setFilters((prev) => ({ ...prev, status: statusFilters }));
+            setPageIndex(0);
+            refetch();
+          }}
+          setTimeDebounce={() => {}}
+        />
+        <TableFilter
+          title="Direção"
+          filter="direction_id"
+          options={directionOptions}
+          params={{
+            filters: Object.entries(filters).flatMap(([key, values]) =>
+              values.map((value: string) => `${key}:${value}`)
+            ),
+          }}
+          setParams={(newParams: { filters: string[] }) => {
+            const directionFilters = newParams.filters
+              .filter((f) => f.startsWith("direction_id:"))
+              .map((f) => f.split(":")[1]);
+            setFilters((prev) => ({
+              ...prev,
+              direction_id: directionFilters,
+              department_id: directionFilters.length === 0 ? [] : prev.department_id,
+            }));
+            setPageIndex(0);
+            refetch();
+          }}
+          setTimeDebounce={() => {}}
+        />
+        <TableFilter
+          title="Departamento"
+          filter="department_id"
+          options={departmentOptions}
+          params={{
+            filters: Object.entries(filters).flatMap(([key, values]) =>
+              values.map((value: string) => `${key}:${value}`)
+            ),
+          }}
+          setParams={(newParams: { filters: string[] }) => {
+            const departmentFilters = newParams.filters
+              .filter((f) => f.startsWith("department_id:"))
+              .map((f) => f.split(":")[1]);
+            setFilters((prev) => ({ ...prev, department_id: departmentFilters }));
+            setPageIndex(0);
+            refetch();
+          }}
+          setTimeDebounce={() => {}}
+        />
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={resetFilters}
+          className="w-full md:w-auto h-8 border-dashed border-gray-400 text-xs hover:bg-gray-200/50 dark:text-white flex gap-2"
+        >
+          <FilterX />
+          <span>Limpar Filtros</span>
+        </Button>
+      </div>
 
       <div className="relative rounded-md border">
         <div className="overflow-x-auto">
@@ -799,7 +827,7 @@ export function EquipmentClient() {
             <AlertDialogDescription>
               {itemToDelete
                 ? "Tem certeza de que deseja excluir este equipamento? Esta ação não pode ser desfeita."
-                : `Tem certeza de que deseja excluir ${Object.keys(rowSelection).length} itens selecionados? Esta ação não pode be desfeita.`}
+                : `Tem certeza de que deseja excluir ${Object.keys(rowSelection).length} itens selecionados? Esta ação não pode ser desfeita.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

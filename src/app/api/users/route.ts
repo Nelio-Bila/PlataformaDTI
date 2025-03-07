@@ -11,6 +11,23 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Fetch user's groups and permissions
+  const userGroups = await db.userGroup.findMany({
+    where: { user_id: session.user.id },
+    include: {
+      group: {
+        include: {
+          permissions: { include: { permission: true } },
+        },
+      },
+    },
+  });
+
+  const permissions = userGroups.flatMap(ug => ug.group.permissions.map(gp => gp.permission.name));
+  if (!permissions.includes("user:read")) {
+    return NextResponse.json({ error: "Forbidden: Insufficient permissions" }, { status: 403 });
+  }
+
   const { searchParams } = new URL(request.url);
   const page = parseInt(searchParams.get("page") || "0");
   const pageSize = parseInt(searchParams.get("pageSize") || "10");
@@ -52,10 +69,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Check for user:create permission
+  const userGroups = await db.userGroup.findMany({
+    where: { user_id: session.user.id },
+    include: {
+      group: {
+        include: {
+          permissions: { include: { permission: true } },
+        },
+      },
+    },
+  });
+
+  const permissions = userGroups.flatMap(ug => ug.group.permissions.map(gp => gp.permission.name));
+  if (!permissions.includes("user:create")) {
+    return NextResponse.json({ error: "Forbidden: Insufficient permissions" }, { status: 403 });
+  }
+
   const { name, email, password, groupIds } = await request.json();
 
   try {
-    // Hash the password before saving
     const hashedPassword = await hash(password, 10);
 
     const user = await db.user.create({

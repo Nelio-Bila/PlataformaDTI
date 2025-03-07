@@ -1,4 +1,7 @@
 // src/components/tables/request-tables/client.tsx
+
+
+
 "use client";
 
 import TableFilter from "@/components/datatable/table-filter";
@@ -53,7 +56,7 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import { ArrowLeft, BadgeAlertIcon, BadgeCheckIcon, Ban, CheckCircle, Clock, Columns, Eye, FilterX, Hospital, Loader2, MoreHorizontal, Package, PackagePlus, RefreshCw, Sheet, Trash, Trash2 } from "lucide-react";
-import { getSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -70,16 +73,7 @@ interface FilterOption {
 export function RequestClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const session = await getSession();
-      setIsAuthenticated(!!session);
-    };
-    checkAuth();
-  }, []);
+  const { data: session, status } = useSession();
 
   const initialState = useMemo(
     () => ({
@@ -124,6 +118,10 @@ export function RequestClient() {
     actions: true,
   });
 
+  // Check permissions from session
+  const userGroups = session?.user?.groups || [];
+  const hasFullReadPermission = userGroups.some(group => group.permissions.includes("request:read"));
+
   // Fetch request data
   const { data: requestData, isLoading: isRequestLoading, error: requestError, refetch } = useQuery({
     queryKey: ["requests", pageIndex, pageSize, sorting, globalFilter, filters],
@@ -144,10 +142,13 @@ export function RequestClient() {
         }),
       });
       const response = await fetch(`/api/requests?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch requests");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to fetch requests");
+      }
       return response.json() as Promise<{ data: Request[]; total: number }>;
     },
-    enabled: isAuthenticated === true, // Only fetch if authenticated
+    enabled: status === "authenticated",
   });
 
   // Fetch filter options
@@ -158,7 +159,7 @@ export function RequestClient() {
       if (!response.ok) throw new Error("Failed to fetch request filter options");
       return response.json() as Promise<FilterOptions>;
     },
-    enabled: isAuthenticated === true,
+    enabled: status === "authenticated",
   });
 
   // Delete mutation
@@ -182,7 +183,6 @@ export function RequestClient() {
     },
   });
 
-  // Define Portuguese mappings
   const requestTypeLabels: Record<string, string> = {
     REQUISITION: "Requisição",
     RETURN: "Devolução",
@@ -432,14 +432,12 @@ export function RequestClient() {
     []
   );
 
-  // Define request type options
   const requestTypeOptions: FilterOption[] = [
     { value: "REQUISITION", label: "Requisição", icon: ({ className }) => <Package className={className} /> },
     { value: "RETURN", label: "Devolução", icon: ({ className }) => <ArrowLeft className={className} /> },
     { value: "SUBSTITUTION", label: "Substituição", icon: ({ className }) => <RefreshCw className={className} /> },
   ];
 
-  // Define request status options
   const requestStatusOptions: FilterOption[] = [
     { value: "PENDING", label: "Pendente", icon: ({ className }) => <Clock className={className} /> },
     { value: "APPROVED", label: "Aprovado", icon: ({ className }) => <BadgeCheckIcon className={className} /> },
@@ -449,14 +447,12 @@ export function RequestClient() {
     { value: "CANCELLED", label: "Cancelado", icon: ({ className }) => <Ban className={className} /> },
   ];
 
-  // Define direction options
   const directionOptions: FilterOption[] = filterOptions?.directions.map((direction) => ({
     value: direction.id,
     label: direction.name,
     icon: ({ className }) => <Hospital className={className} />,
   })) || [];
 
-  // Define department options (filtered by selected directions)
   const departmentOptions: FilterOption[] = (filterOptions?.departments || [])
     .filter(
       (department) =>
@@ -553,11 +549,11 @@ export function RequestClient() {
     XLSX.writeFile(workbook, `exportacao_requisicoes_${new Date().toISOString().slice(0, 10)}.xlsx`);
   }, [table, columnVisibility]);
 
-  if (isAuthenticated === null) {
-    return ( <RequestClientSkeleton />);
+  if (status === "loading" || isRequestLoading || isFilterLoading) {
+    return <RequestClientSkeleton />;
   }
 
-  if (!isAuthenticated) {
+  if (status === "unauthenticated") {
     return (
       <div className="p-6">
         <h1 className="text-2xl font-bold text-red-600">Acesso Negado</h1>
@@ -567,10 +563,6 @@ export function RequestClient() {
         </Link>
       </div>
     );
-  }
-
-  if (isRequestLoading || isFilterLoading) {
-    return ( <RequestClientSkeleton />);
   }
 
   if (requestError) {
@@ -858,7 +850,7 @@ export function RequestClient() {
             <AlertDialogDescription>
               {itemToDelete
                 ? "Tem certeza de que deseja excluir esta requisição? Esta ação não pode ser desfeita."
-                : `Tem certeza de que desea excluir ${Object.keys(rowSelection).length} itens selecionados? Esta ação não pode ser desfeita.`}
+                : `Tem certeza de que deseja excluir ${Object.keys(rowSelection).length} itens selecionados? Esta ação não pode ser desfeita.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

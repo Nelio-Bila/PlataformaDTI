@@ -1,4 +1,4 @@
-// src/components/forms/sign-in-form.tsx
+// // src/components/forms/sign-in-form.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -78,7 +78,7 @@ export function SignInForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="Digite seu email" type="email" {...field} />
+                <Input placeholder="Digite seu email" type="email" className="w-full" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -93,6 +93,7 @@ export function SignInForm() {
               <FormControl>
                 <PasswordInput
                   placeholder="Digite sua senha"
+                  className="w-full"
                   {...field}
                   showPassword={showPassword} // Pass showPassword state to control visibility
                 />
@@ -116,7 +117,7 @@ export function SignInForm() {
         )}
         <div className="flex justify-end">
 
-        <Button type="submit" className="" disabled={is_pending}>
+        <Button type="submit"  disabled={is_pending}>
           {is_pending ? "Entrando..." : "Entrar"}
         </Button>
         </div>
@@ -124,3 +125,4 @@ export function SignInForm() {
     </Form>
   );
 }
+
