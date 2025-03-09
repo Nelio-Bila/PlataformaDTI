@@ -40,6 +40,7 @@ import {
   Package,
   User,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 
@@ -100,6 +101,7 @@ export function RequestDetails({ requestData }: { requestData: RequestDetailsDat
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<StatusKey>(requestData.status);
   const [isLoading, setIsLoading] = useState(true);
+  const session = useSession()
 
   useEffect(() => {
     if (requestData) {
@@ -232,6 +234,7 @@ export function RequestDetails({ requestData }: { requestData: RequestDetailsDat
             {formatStatus(requestData.status)}
           </Badge>
         </div>
+        {session.status === "authenticated"?(
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogTrigger asChild>
             <Button variant="outline">Actualizar Estado</Button>
@@ -279,7 +282,7 @@ export function RequestDetails({ requestData }: { requestData: RequestDetailsDat
               </Button>
             </div>
           </DialogContent>
-        </Dialog>
+        </Dialog>):null}
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
