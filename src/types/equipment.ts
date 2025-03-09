@@ -62,7 +62,7 @@ export type Equipment = {
   service?: Service | null;
   sector?: Sector | null;
   repartition?: Repartition | null;
-  images?: { id: string; equipment_id: string; url: string, description: string }[];
+  images?: EquipmentImage[];
   registered_by_id?: string | null;
   registeredBy?: User | null;
   created_at: string;
