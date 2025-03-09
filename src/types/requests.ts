@@ -1,11 +1,14 @@
 // src/types/requests.ts
-import { Direction, Department, Service, Sector, Repartition, User } from "@prisma/client";
+import { Department, Direction, Repartition, Sector, Service, User } from "@prisma/client";
+
+export type RequestType = "REQUISITION" | "RETURN" | "SUBSTITUTION";
+export type StatusKey = "PENDING" | "APPROVED" | "REJECTED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
 
 export type Request = {
   id: string;
   request_number: string;
-  type: "REQUISITION" | "RETURN" | "SUBSTITUTION";
-  status: "PENDING" | "APPROVED" | "REJECTED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+  type: RequestType;
+  status: StatusKey;
   requester_id?: string | null;
   requester_name?: string | null;
   requester?: User | null;
@@ -50,3 +53,40 @@ export type FiltersState = {
   requester_direction_id: string[];
   requester_department_id: string[];
 };
+
+
+
+
+
+export const statusTranslations: Record<StatusKey, string> = {
+  PENDING: "Pendente",
+  APPROVED: "Aprovado",
+  REJECTED: "Rejeitado",
+  IN_PROGRESS: "Em Progresso",
+  COMPLETED: "Concluído",
+  CANCELLED: "Cancelado",
+};
+
+export const typeTranslations: Record<RequestType, string> = {
+  REQUISITION: "Requisição",
+  RETURN: "Devolução",
+  SUBSTITUTION: "Substituição",
+};
+
+export const statusColors: Record<StatusKey, string> = {
+  PENDING: "#3B82F6",
+  APPROVED: "#10B981",
+  REJECTED: "#EF4444",
+  IN_PROGRESS: "#8B5CF6",
+  COMPLETED: "#059669",
+  CANCELLED: "#6B7280",
+};
+
+export const formatStatus = (status: string): string => {
+  return statusTranslations[status as StatusKey] || status;
+};
+
+export const formatRequestType = (type: string): string => {
+  return typeTranslations[type as RequestType] || type;
+};
+

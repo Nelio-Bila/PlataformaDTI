@@ -2,8 +2,8 @@
 
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
 import { hash } from "bcryptjs";
+import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   const session = await auth();

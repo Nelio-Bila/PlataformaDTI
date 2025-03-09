@@ -5,9 +5,12 @@ import { db } from "@/lib/db";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const user_id = id;
+
   const user = await db.user.findUnique({
-    where: { id: params.id },
+    where: { id: user_id },
     select: { name: true, email: true },
   });
 
@@ -31,9 +34,12 @@ const breadcrumbItems = (userName: string | null, userEmail: string | null) => [
   { title: userName || userEmail || "Utilizador", link: undefined }, // Explicitly set link as undefined
 ];
 
-export default async function UserDetailsPage({ params }: { params: { id: string } }) {
+export default async function UserDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const user_id = id;
+
   const user = await db.user.findUnique({
-    where: { id: params.id },
+    where: { id: user_id },
     include: {
       groups: { include: { group: true } },
       requestsMade: true,

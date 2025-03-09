@@ -52,7 +52,7 @@ import {
 import { Edit, Eye, Lock, MoreHorizontal, RefreshCw, Trash2, UserPlus, Users } from "lucide-react";
 import { getSession } from "next-auth/react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
@@ -67,7 +67,6 @@ interface User {
 
 export function UsersClient() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [pageIndex, setPageIndex] = useState(0);

@@ -1,28 +1,28 @@
 import { cva, type VariantProps } from "class-variance-authority";
 import {
-    CheckIcon,
-    ChevronDown,
-    WandSparkles,
-    XCircle,
-    XIcon,
+  CheckIcon,
+  ChevronDown,
+  WandSparkles,
+  XCircle,
+  XIcon,
 } from "lucide-react";
 import * as React from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-    CommandSeparator,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
 } from "@/components/ui/command";
 import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -131,7 +131,6 @@ export const MultiSelect = React.forwardRef<
       animation = 0,
       maxCount = 3,
       modalPopover = false,
-      asChild = false,
       className,
       ...props
     },

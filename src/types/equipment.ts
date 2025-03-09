@@ -45,7 +45,7 @@
 
 
 // src/types/equipment.ts
-import { Direction, Department, Repartition, Sector, Service, User } from "@prisma/client";
+import { Department, Direction, Repartition, Sector, Service, User } from "@prisma/client";
 
 export type Equipment = {
   id: string;
@@ -64,11 +64,13 @@ export type Equipment = {
   service?: Service | null;
   sector?: Sector | null;
   repartition?: Repartition | null;
-  images?: { id: string; equipment_id: string; url: string }[];
+  images?: { id: string; equipment_id: string; url: string, description: string }[];
   registered_by_id?: string | null;
   registeredBy?: User | null;
   created_at: string;
   updated_at: string;
+  purchase_date?:  string;
+  warranty_end?:   string;
 };
 
 export type FilterOptions = {

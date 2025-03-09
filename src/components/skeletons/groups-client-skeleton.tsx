@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Plus, RefreshCw } from "lucide-react";
 
 export default function GroupsClientSkeleton() {
   const skeletonRows = Array(10).fill(null);
@@ -18,10 +18,6 @@ export default function GroupsClientSkeleton() {
           <Button variant="outline" size="icon" disabled>
             <RefreshCw className="h-4 w-4" />
           </Button>
-          {/* <Button variant="destructive" disabled>
-            <Trash2 className="h-4 w-4 mr-2" />
-            Excluir Selecionados
-          </Button> */}
           <Button disabled>
             <Plus className="h-4 w-4 mr-2" />
             Novo Grupo

@@ -61,7 +61,7 @@ export function UserForm() {
 
   const mutation = useMutation({
     mutationFn: async (data: UserFormData) => {
-      const { confirmPassword, ...dataToSend } = data; // Exclude confirmPassword from API request
+      const { ...dataToSend } = data;
       const response = await fetch("/api/users", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

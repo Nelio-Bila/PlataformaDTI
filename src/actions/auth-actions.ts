@@ -55,24 +55,6 @@ export async function create_user(data: {
 }
 
 
-
-// export async function login(email?: string, password?: string) {
-//   // Type guard to ensure email and password are strings
-//   if (!email || !password) return null;
-
-//   const user = await db.user.findUnique({
-//     where: { email: email }, // Now TypeScript knows email is a string
-//   });
-
-//   if (!user || !user.password) return null;
-
-//   const is_valid = await compare(password, user.password); // Fixed async issue
-//   if (!is_valid) return null;
-
-//   return { id: user.id, name: user.name, email: user.email };
-// }
-
-
 export async function login(email?: string, password?: string) {
   if (!email || !password) return null;
 

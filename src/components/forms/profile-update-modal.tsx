@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { SafeUserType } from "@/types";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import type { FormEvent } from "react";
 import { useState } from "react";
@@ -109,7 +109,14 @@ const ProfileUpdateModal: React.FC<ProfileUpdateModalProps> = ({ user, onUserUpd
               Cancelar
             </Button>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Actualizando..." : "Actualizar Perfil"}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Actualizando...
+                </>
+              ) : (
+                "Actualizar Perfil"
+              )}
             </Button>
           </div>
         </form>

@@ -134,7 +134,7 @@ import { NextResponse } from "next/server";
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
@@ -142,7 +142,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const { status } = await request.json();
 
     // Validate status

@@ -5,9 +5,13 @@ import { db } from "@/lib/db";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const group_id = id;
+
   const group = await db.group.findUnique({
-    where: { id: params.id },
+    where: { id: group_id },
     select: { name: true },
   });
 
@@ -31,9 +35,12 @@ const breadcrumbItems = (groupName: string) => [
   { title: groupName},
 ];
 
-export default async function GroupDetailsPage({ params }: { params: { id: string } }) {
+export default async function GroupDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const grouo_id = id;
+
   const group = await db.group.findUnique({
-    where: { id: params.id },
+    where: { id: grouo_id },
     include: {
       users: { include: { user: true } },
       permissions: { include: { permission: true } },

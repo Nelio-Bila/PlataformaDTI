@@ -15,9 +15,12 @@ const breadcrumbItems = [
   { title: "Requisição", link: "/requests/view-guest" },
 ];
 
-export default async function ViewGuestRequest({ searchParams }: { searchParams: { ref: string } }) {
+
+export default async function ViewGuestRequest({ searchParams }: { searchParams: Promise<{ ref: string }> }) {
+  const { ref } = await searchParams;
+
   const request = await db.request.findFirst({
-    where: { request_number: searchParams.ref },
+    where: { request_number: ref },
     include: {
       items: true,
       requester_department: true,

@@ -392,7 +392,7 @@ export function EquipmentClient() {
         ),
       },
     ],
-    []
+    [refetch, sorting]
   );
 
   const equipmentTypeOptions: FilterOption[] = (filterOptions?.types || []).map((type) => ({

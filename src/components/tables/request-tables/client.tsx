@@ -1,7 +1,4 @@
 // src/components/tables/request-tables/client.tsx
-
-
-
 "use client";
 
 import TableFilter from "@/components/datatable/table-filter";
@@ -73,7 +70,7 @@ interface FilterOption {
 export function RequestClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session, status } = useSession();
+  const { status } = useSession();
 
   const initialState = useMemo(
     () => ({
@@ -117,10 +114,6 @@ export function RequestClient() {
     created_at: true,
     actions: true,
   });
-
-  // Check permissions from session
-  const userGroups = session?.user?.groups || [];
-  const hasFullReadPermission = userGroups.some(group => group.permissions.includes("request:read"));
 
   // Fetch request data
   const { data: requestData, isLoading: isRequestLoading, error: requestError, refetch } = useQuery({
@@ -429,7 +422,7 @@ export function RequestClient() {
         ),
       },
     ],
-    []
+    [refetch, sorting]
   );
 
   const requestTypeOptions: FilterOption[] = [

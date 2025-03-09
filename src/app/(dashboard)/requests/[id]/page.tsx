@@ -1,5 +1,6 @@
 // src/app/(dashboard)/requests/[id]/page.tsx
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import PageContainer from "@/components/layout/page-container";
 import { RequestDetails } from "@/components/requests/request-details";
 import { db } from "@/lib/db";
 import type { Metadata } from "next";
@@ -17,7 +18,7 @@ const breadcrumbItems = [
   { title: "Detalhes da Requisição" },
 ];
 
-export default async function RequestDetailsPage({ params }: { params: { id: string } }) {
+export default async function RequestDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const request_id = id;
 
@@ -32,8 +33,16 @@ export default async function RequestDetailsPage({ params }: { params: { id: str
     },
   });
 
+
   if (!request) {
-    return <div>Requisição não encontrada</div>;
+    return (
+      <PageContainer>
+        <div className="p-6 w-full">
+          <Breadcrumbs items={breadcrumbItems} />
+          <p>Requisição não encontrada.</p>
+        </div>
+      </PageContainer>
+    );
   }
 
   // Transform the data to match the RequestDetailsData interface

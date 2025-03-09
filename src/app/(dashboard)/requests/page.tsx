@@ -4,8 +4,15 @@ import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import PageContainer from "@/components/layout/page-container";
 import { RequestClient } from "@/components/tables/request-tables/client";
 import { db } from "@/lib/db";
-import { redirect } from "next/navigation";
+import { AlertCircle } from "lucide-react";
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -45,7 +52,15 @@ export default async function RequestsPage() {
     <PageContainer>
       <div className="p-6 w-full">
         <Breadcrumbs items={breadcrumbItems} />
-        <RequestClient />
+        {hasFullReadPermission ? <RequestClient /> : (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Erro</AlertTitle>
+            <AlertDescription>
+              Não tens permissão para visualizar este conteúdo
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
     </PageContainer>
   );

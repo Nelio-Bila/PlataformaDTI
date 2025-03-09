@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Loader2 } from "lucide-react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useTransition } from "react";
@@ -117,9 +118,16 @@ export function SignInForm() {
         )}
         <div className="flex justify-end">
 
-        <Button type="submit"  disabled={is_pending}>
-          {is_pending ? "Entrando..." : "Entrar"}
-        </Button>
+          <Button type="submit" disabled={is_pending}>
+            {is_pending ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Entrando...
+              </>
+            ) : (
+              "Entrar"
+            )}
+          </Button>
         </div>
       </form>
     </Form>

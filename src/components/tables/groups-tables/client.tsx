@@ -52,7 +52,6 @@ import {
 import { Edit, Eye, Key, MoreHorizontal, Plus, RefreshCw, Trash2 } from "lucide-react";
 import { getSession } from "next-auth/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
@@ -66,8 +65,6 @@ interface Group {
 }
 
 export function GroupsClient() {
-  const router = useRouter();
-
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);

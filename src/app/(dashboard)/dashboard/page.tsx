@@ -1,159 +1,3 @@
-// // src/app/(dashboard)/dashboard/page.tsx
-// "use client";
-
-// import DashboardSkeleton from "@/components/skeletons/dashboard-skeleton";
-// import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-// import { useQuery } from "@tanstack/react-query";
-// import {
-//   Bar,
-//   BarChart,
-//   CartesianGrid,
-//   Cell,
-//   Legend,
-//   Pie,
-//   PieChart,
-//   ResponsiveContainer,
-//   Tooltip,
-//   XAxis,
-//   YAxis,
-// } from "recharts";
-// import { useSession } from "next-auth/react";
-
-// interface StatusData {
-//   status: string;
-//   count: number;
-// }
-
-// interface DepartmentData {
-//   department: string;
-//   count: number;
-// }
-
-// interface Group {
-//   name: string;
-//   permissions: string[];
-// }
-
-// export default function DashboardHomePage() {
-//   const { data: session } = useSession();
-//   const {
-//     data,
-//     isLoading,
-//     error,
-//   } = useQuery({
-//     queryKey: ["dashboard-statistics"],
-//     queryFn: () => fetch("/api/dashboard/statistics").then((res) => res.json()),
-//   });
-
-//   const COLORS = ["#005DB2", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
-
-//   if (isLoading || !session) {
-//     return <DashboardSkeleton />;
-//   }
-
-//   if (error) {
-//     return (
-//       <div className="p-6 space-y-6">
-//         <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-50">Painel</h1>
-//         <p className="text-red-500">Erro ao carregar os dados do painel: {(error as Error).message}</p>
-//       </div>
-//     );
-//   }
-
-//   // Type userGroups correctly based on SafeUserType
-//   const userGroups: Group[] = session.user.groups || [];
-//   const isAdmin = userGroups.some(group => group.name === "Admins");
-//   const isTechnician = userGroups.some(group => group.name === "Department: Tecnologias de Informação");
-//   const canViewEquipment = isAdmin || isTechnician;
-
-//   return (
-//     <div className="p-6 space-y-6">
-//       <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-50">Painel</h1>
-
-//       <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-//         {/* Equipment Section (Admins and Technicians only) */}
-//         {canViewEquipment && (
-//           <>
-//             <Card>
-//               <CardHeader>
-//                 <CardTitle>Total Equipamentos Registrados</CardTitle>
-//               </CardHeader>
-//               <CardContent className="flex justify-center items-center align-middle">
-//                 <p className="text-6xl text-center font-bold text-primary">
-//                   {data?.total_equipment || 0}
-//                 </p>
-//               </CardContent>
-//             </Card>
-
-//             <Card className="col-span-1 md:col-span-2 lg:col-span-1">
-//               <CardHeader>
-//                 <CardTitle>Percentagem do Estado dos Equipamentos</CardTitle>
-//               </CardHeader>
-//               <CardContent>
-//                 <ResponsiveContainer width="100%" height={200}>
-//                   <PieChart>
-//                     <Pie
-//                       data={data?.status_data || []}
-//                       dataKey="count"
-//                       nameKey="status"
-//                       cx="50%"
-//                       cy="50%"
-//                       outerRadius={80}
-//                       fill="#8884d8"
-//                       label
-//                     >
-//                       {data?.status_data?.map((_: StatusData, index: number) => (
-//                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-//                       ))}
-//                     </Pie>
-//                     <Tooltip />
-//                     <Legend />
-//                   </PieChart>
-//                 </ResponsiveContainer>
-//               </CardContent>
-//             </Card>
-
-//             <Card className="col-span-1 md:col-span-2 lg:col-span-2">
-//               <CardHeader>
-//                 <CardTitle>Equipamentos por Departamento</CardTitle>
-//               </CardHeader>
-//               <CardContent>
-//                 <ResponsiveContainer width="100%" height={300}>
-//                   <BarChart data={data?.department_data || []}>
-//                     <CartesianGrid strokeDasharray="3 3" />
-//                     <XAxis dataKey="department" angle={-45} textAnchor="end" height={70} />
-//                     <YAxis />
-//                     <Tooltip />
-//                     <Bar dataKey="count" fill="#005DB2" />
-//                   </BarChart>
-//                 </ResponsiveContainer>
-//               </CardContent>
-//             </Card>
-//           </>
-//         )}
-
-//         {/* Request Section (All users) */}
-//         <Card className="col-span-1 md:col-span-2 lg:col-span-2">
-//           <CardHeader>
-//             <CardTitle>Requisições por Estado</CardTitle>
-//           </CardHeader>
-//           <CardContent>
-//             <ResponsiveContainer width="100%" height={300}>
-//               <BarChart data={data?.request_data || []}>
-//                 <CartesianGrid strokeDasharray="3 3" />
-//                 <XAxis dataKey="status" />
-//                 <YAxis />
-//                 <Tooltip />
-//                 <Bar dataKey="count" fill="#00C49F" />
-//               </BarChart>
-//             </ResponsiveContainer>
-//           </CardContent>
-//         </Card>
-//       </div>
-//     </div>
-//   );
-// }
-
 // src/app/(dashboard)/dashboard/page.tsx
 "use client";
 
@@ -161,53 +5,29 @@ import DashboardSkeleton from "@/components/skeletons/dashboard-skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { formatRequestType, formatStatus, statusColors } from "@/types/requests";
 import { RequestStatus } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { pt } from "date-fns/locale";
 import { Clock, FileText, HardDrive, Package, Users } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import {
-    Bar,
-    BarChart,
-    CartesianGrid,
-    Cell,
-    Legend,
-    Line,
-    LineChart,
-    Pie,
-    PieChart,
-    ResponsiveContainer,
-    Tooltip,
-    XAxis,
-    YAxis,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Legend,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
-
-// Helper function to format status for display
-const formatStatus = (status: string) => {
-  return status.split('_').map(word =>
-    word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-  ).join(' ');
-};
-
-// Helper function for request type formatting
-const formatRequestType = (type: string) => {
-  return type.charAt(0) + type.slice(1).toLowerCase();
-};
-
-// Status color mapping
-const statusColors = {
-  ACTIVE: "#10B981", // Green
-  INACTIVE: "#6B7280", // Gray
-  MAINTENANCE: "#F59E0B", // Amber
-  BROKEN: "#EF4444", // Red
-  PENDING: "#3B82F6", // Blue
-  APPROVED: "#10B981", // Green
-  REJECTED: "#EF4444", // Red
-  IN_PROGRESS: "#8B5CF6", // Purple
-  COMPLETED: "#059669", // Emerald
-  CANCELLED: "#6B7280", // Gray
-};
 
 // Define color palettes
 const CHART_COLORS = ["#005DB2", "#00C49F", "#FFBB28", "#FF8042", "#8884D8", "#0088FE", "#00C49F"];
@@ -244,11 +64,13 @@ interface DashboardResponse {
     equipment_age: Array<{ name: string; value: number }>;
   } | null;
   requests: {
+    requester_name: string;
     total_my_requests: number;
     request_by_status: Array<{ status: string; count: number }>;
     request_by_type: Array<{ type: string; count: number }>;
     recent_requests: Array<{
       id: string;
+      requester_name: string;
       request_number: string;
       type: string;
       status: string;
@@ -448,7 +270,7 @@ export default function DashboardHomePage() {
                             </Badge>
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {formatRequestType(request.type)} por {request.requester?.name || 'Unknown'} - {formatDistanceToNow(new Date(request.created_at), { addSuffix: true })}
+                            { formatRequestType(request.type)} por {request.requester?.name || request.requester_name || 'Desconhecido'} - {formatDistanceToNow(new Date(request.created_at), { locale: pt, addSuffix: true })}
                           </p>
                         </div>
                       </div>

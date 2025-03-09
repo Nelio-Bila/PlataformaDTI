@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { PackagePlus, Search } from "lucide-react";
+import { Loader2, PackagePlus, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
@@ -52,66 +52,81 @@ export function RequestOptionsForm() {
     return (
         <>
             <h1 className="text-center font-bold text-2xl mt-4">Requisições</h1>
-        <div className="my-8">
-            <p className="text-center text-sm text-gray-600 dark:text-gray-300 mb-4">
-                Não tem conta? Use as opções abaixo como convidado:
-            </p>
-            <Tabs defaultValue="create" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
-                    <TabsTrigger
-                        value="create"
-                        className="rounded-md py-2 text-sm font-medium transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700"
-                    >
-                        Criar Requisição
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="view"
-                        className="rounded-md py-2 text-sm font-medium transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700"
-                    >
-                        Ver Requisição
-                    </TabsTrigger>
-                </TabsList>
+            <div className="my-8">
+                <p className="text-center text-sm text-gray-600 dark:text-gray-300 mb-4">
+                    Não tem conta? Use as opções abaixo como convidado:
+                </p>
+                <Tabs defaultValue="create" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 rounded-lg bg-gray-100 p-1 dark:bg-gray-800">
+                        <TabsTrigger
+                            value="create"
+                            className="rounded-md py-2 text-sm font-medium transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700"
+                        >
+                            Criar Requisição
+                        </TabsTrigger>
+                        <TabsTrigger
+                            value="view"
+                            className="rounded-md py-2 text-sm font-medium transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm dark:data-[state=active]:bg-gray-700"
+                        >
+                            Ver Requisição
+                        </TabsTrigger>
+                    </TabsList>
 
-                <TabsContent value="create" className="mt-4">
-                    <div className="flex flex-col items-center space-y-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all hover:shadow-md">
-                        <PackagePlus className="h-8 w-8 text-primary" />
-                        <p className="text-center text-sm text-gray-700 dark:text-gray-300">
-                            Crie uma nova requisição para solicitar produtos ou serviços sem precisar iniciar a sessão.
-                        </p>
-                        <div className="flex justify-end">
-                            <Button
-                                onClick={handleCreateRequest}
-                                disabled={isPending}>
-                                {isPending ? "Processando..." : "Requisitar Agora"}
-                            </Button>
+                    <TabsContent value="create" className="mt-4">
+                        <div className="flex flex-col items-center space-y-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all hover:shadow-md">
+                            <PackagePlus className="h-8 w-8 text-primary" />
+                            <p className="text-center text-sm text-gray-700 dark:text-gray-300">
+                                Crie uma nova requisição para solicitar produtos ou serviços sem precisar iniciar a sessão.
+                            </p>
+                            <div className="flex justify-end">
+                                <Button
+                                    onClick={handleCreateRequest}
+                                    disabled={isPending}>
+                                    {isPending ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Processando...
+                                        </>
+                                    ) : (
+                                        "Requisitar Agora"
+                                    )}
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                </TabsContent>
+                    </TabsContent>
 
-                <TabsContent value="view" className="mt-4">
-                    <div className="flex flex-col items-center space-y-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all hover:shadow-md">
-                        <Search className="h-8 w-8 text-primary" />
-                        <p className="text-center text-sm text-gray-700 dark:text-gray-300">
-                            Veja o estado de uma requisição existente inserindo seu número de referência.
-                        </p>
-                        <Input
-                            placeholder="Número de Referência (ex: REQ-123)"
-                            value={referenceNumber}
-                            onChange={(e) => setReferenceNumber(e.target.value)}
-                            className="w-full"
-                        />
-                        <div className="flex justify-end">
-                            <Button
-                                onClick={handleViewRequest}
-                                disabled={isPending}
-                            >
-                                {isPending ? "Procurando..." : "Visualizar"}
-                            </Button>
+                    <TabsContent value="view" className="mt-4">
+                        <div className="flex flex-col items-center space-y-4 p-4 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 transition-all hover:shadow-md">
+                            <Search className="h-8 w-8 text-primary" />
+                            <p className="text-center text-sm text-gray-700 dark:text-gray-300">
+                                Veja o estado de uma requisição existente inserindo seu número de referência.
+                            </p>
+                            <Input
+                                placeholder="Número de Referência (ex: REQ-123)"
+                                value={referenceNumber}
+                                onChange={(e) => setReferenceNumber(e.target.value)}
+                                className="w-full"
+                            />
+                            <div className="flex justify-end">
+                                <Button
+                                    onClick={handleViewRequest}
+                                    disabled={isPending}
+                                >
+
+                                    {isPending ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Procurando...
+                                        </>
+                                    ) : (
+                                        "Visualizar"
+                                    )}
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                </TabsContent>
-            </Tabs>
-        </div>
+                    </TabsContent>
+                </Tabs>
+            </div>
         </>
     );
 }

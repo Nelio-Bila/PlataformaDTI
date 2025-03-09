@@ -5,44 +5,44 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { formatRequestType, formatStatus, RequestType, statusColors, StatusKey } from "@/types/requests";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import {
-    AlertCircle,
-    Calendar,
-    Clock,
-    FileText,
-    MapPin,
-    Package,
-    User,
+  AlertCircle,
+  Calendar,
+  Clock,
+  FileText,
+  MapPin,
+  Package,
+  User,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 
-type RequestType = "REQUISITION" | "RETURN" | "SUBSTITUTION";
-type StatusKey = "PENDING" | "APPROVED" | "REJECTED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+
 
 interface RequestDetailsData {
   id: string;
@@ -69,37 +69,9 @@ interface RequestDetailsData {
   destination_direction?: { name: string | null } | null;
 }
 
-const statusTranslations: Record<StatusKey, string> = {
-  PENDING: "Pendente",
-  APPROVED: "Aprovado",
-  REJECTED: "Rejeitado",
-  IN_PROGRESS: "Em Progresso",
-  COMPLETED: "Concluído",
-  CANCELLED: "Cancelado",
-};
 
-const typeTranslations: Record<RequestType, string> = {
-  REQUISITION: "Requisição",
-  RETURN: "Devolução",
-  SUBSTITUTION: "Substituição",
-};
 
-const statusColors: Record<StatusKey, string> = {
-  PENDING: "#3B82F6",
-  APPROVED: "#10B981",
-  REJECTED: "#EF4444",
-  IN_PROGRESS: "#8B5CF6",
-  COMPLETED: "#059669",
-  CANCELLED: "#6B7280",
-};
 
-const formatStatus = (status: string): string => {
-  return statusTranslations[status as StatusKey] || status;
-};
-
-const formatRequestType = (type: string): string => {
-  return typeTranslations[type as RequestType] || type;
-};
 
 const updateRequestStatus = async ({
   id,

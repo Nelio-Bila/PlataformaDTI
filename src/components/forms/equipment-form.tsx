@@ -54,6 +54,7 @@ import {
   Upload,
   Wrench,
 } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "nextjs-toploader/app";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -135,7 +136,7 @@ export function EquipmentForm() {
   }, [files]);
 
   // Fetch Directions
-  const { data: directions = [], isLoading: isDirectionsLoading} = useQuery({
+  const { data: directions = [], isLoading: isDirectionsLoading } = useQuery({
     queryKey: ["directions"],
     queryFn: () => fetch("/api/equipment/directions").then(res => res.json()),
   });
@@ -576,7 +577,13 @@ export function EquipmentForm() {
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 {files.map((file, index) => (
                   <div key={index} className="relative bg-white dark:bg-gray-950 p-2 rounded-lg shadow">
-                    <img src={URL.createObjectURL(file)} alt={file.name} className="w-full h-32 object-cover rounded" />
+                    <Image
+                      src={URL.createObjectURL(file)}
+                      alt={file.name}
+                      width={300}
+                      height={128}
+                      className="w-full h-32 object-cover rounded"
+                    />
                     <p className="text-sm text-gray-600 truncate mt-1">{file.name}</p>
                     <Button
                       variant="destructive"
