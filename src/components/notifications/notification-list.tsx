@@ -80,9 +80,7 @@
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { NotificationService } from "@/lib/notifications";
-// Import the custom Notification interface instead of the Prisma type
-import { Notification } from "@/lib/notifications"; // Adjust the import path if needed
+import { Notification, NotificationService } from "@/lib/notifications";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Bell, CheckCircle, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react";
