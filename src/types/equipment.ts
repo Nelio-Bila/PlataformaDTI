@@ -26,14 +26,15 @@
 //     repartition?: { name: string; id: string; created_at: Date; updated_at: Date; department_id: string } | null;
 // }
 
-
-// export interface EquipmentImage {
-//   id: string;
-//   equipment_id: string;
-//   url: string;
-//   description?: string | null;
-//   created_at: string;
-// }
+// src/types/equipment.ts
+import { Department, Direction, Repartition, Sector, Service, User } from "@prisma/client";
+export interface EquipmentImage {
+  id: string;
+  equipment_id: string;
+  url: string;
+  description?: string | null;
+  created_at: string;
+}
 
 //   export interface FilterOptions {
 //     types: string[];
@@ -43,9 +44,6 @@
 //   }
 
 
-
-// src/types/equipment.ts
-import { Department, Direction, Repartition, Sector, Service, User } from "@prisma/client";
 
 export type Equipment = {
   id: string;
