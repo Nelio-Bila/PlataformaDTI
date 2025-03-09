@@ -1,9 +1,24 @@
 // src/lib/notifications.ts
 import { db } from "@/lib/db";
-import { Prisma } from "@prisma/client";
+
+// Define the notification type to match what the client expects
+export interface Notification {
+  id: string;
+  type: string;
+  notifiableId: string;
+  notifiableType: string;
+  data: {
+    requestId: string;
+    requestNumber: string;
+    requesterName: string;
+    message: string;
+  };
+  readAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export class NotificationService {
-  // Create a notification
   static async createNotification({
     type,
     notifiableId,
@@ -14,20 +29,32 @@ export class NotificationService {
     notifiableId: string;
     notifiableType: string;
     data: Record<string, any>;
-  }) {
-    return await db.notification.create({
+  }): Promise<Notification> {
+    const notification = await db.notification.create({
       data: {
         type,
         notifiable_id: notifiableId,
         notifiable_type: notifiableType,
-        data: Prisma.JsonValue.parse(JSON.stringify(data)),
+        data,
       },
     });
+
+    // Transform the Prisma response to match the Notification interface
+    return {
+      id: notification.id,
+      type: notification.type,
+      notifiableId: notification.notifiable_id,
+      notifiableType: notification.notifiable_type,
+      data: notification.data as Notification["data"],
+      readAt: notification.read_at ? notification.read_at.toISOString() : null,
+      createdAt: notification.created_at.toISOString(),
+      updatedAt: notification.updated_at.toISOString(),
+    };
   }
 
-  // Get unread notifications for a specific notifiable (user or group)
-  static async getUnreadNotifications(notifiableId: string, notifiableType: string) {
-    return await db.notification.findMany({
+  static async getUnreadNotifications(notifiableId: string, notifiableType: string): Promise<Notification[]> {
+
+    const notifications = await db.notification.findMany({
       where: {
         notifiable_id: notifiableId,
         notifiable_type: notifiableType,
@@ -35,29 +62,60 @@ export class NotificationService {
       },
       orderBy: { created_at: "desc" },
     });
+
+    // Transform the Prisma response to match the Notification interface
+    return notifications.map((notification) => ({
+      id: notification.id,
+      type: notification.type,
+      notifiableId: notification.notifiable_id,
+      notifiableType: notification.notifiable_type,
+      data: notification.data as Notification["data"],
+      readAt: notification.read_at ? notification.read_at.toISOString() : null,
+      createdAt: notification.created_at.toISOString(),
+      updatedAt: notification.updated_at.toISOString(),
+    }));
   }
 
-  // Get all notifications for a specific notifiable
-  static async getAllNotifications(notifiableId: string, notifiableType: string) {
-    return await db.notification.findMany({
+  static async getAllNotifications(notifiableId: string, notifiableType: string): Promise<Notification[]> {
+    const notifications = await db.notification.findMany({
       where: {
         notifiable_id: notifiableId,
         notifiable_type: notifiableType,
       },
       orderBy: { created_at: "desc" },
     });
+
+    return notifications.map((notification) => ({
+      id: notification.id,
+      type: notification.type,
+      notifiableId: notification.notifiable_id,
+      notifiableType: notification.notifiable_type,
+      data: notification.data as Notification["data"],
+      readAt: notification.read_at ? notification.read_at.toISOString() : null,
+      createdAt: notification.created_at.toISOString(),
+      updatedAt: notification.updated_at.toISOString(),
+    }));
   }
 
-  // Mark a notification as read
-  static async markAsRead(notificationId: string) {
-    return await db.notification.update({
+  static async markAsRead(notificationId: string): Promise<Notification> {
+    const notification = await db.notification.update({
       where: { id: notificationId },
       data: { read_at: new Date() },
     });
+
+    return {
+      id: notification.id,
+      type: notification.type,
+      notifiableId: notification.notifiable_id,
+      notifiableType: notification.notifiable_type,
+      data: notification.data as Notification["data"],
+      readAt: notification.read_at ? notification.read_at.toISOString() : null,
+      createdAt: notification.created_at.toISOString(),
+      updatedAt: notification.updated_at.toISOString(),
+    };
   }
 
-  // Mark all notifications as read for a notifiable
-  static async markAllAsRead(notifiableId: string, notifiableType: string) {
+  static async markAllAsRead(notifiableId: string, notifiableType: string): Promise<{ count: number }> {
     return await db.notification.updateMany({
       where: {
         notifiable_id: notifiableId,

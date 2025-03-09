@@ -1,9 +1,8 @@
-import { RequestDetailsSkeleton } from '@/components/skeletons/request-details-skeleton'
-import React from 'react'
+import { RequestFormSkeleton } from '@/components/skeletons/request-form-skeleton'
 
 export default function loading() {
   return (
-    <RequestDetailsSkeleton/>
+    <RequestFormSkeleton/>
   )
 }
 
