@@ -195,6 +195,8 @@ model Equipment {
   purchase_date  DateTime?
   warranty_end   DateTime?
   status         String
+  observations   String?          @db.Text
+  extra_fields   Json?            // Store custom user-defined key-value data
   direction_id   String?
   department_id  String?
   sector_id      String?

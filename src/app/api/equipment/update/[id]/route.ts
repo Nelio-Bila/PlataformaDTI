@@ -1,5 +1,6 @@
 // src/app/api/equipment/update/[id]/route.ts
 import { db } from "@/lib/db";
+import { Prisma } from "@prisma/client";
 import { v2 as cloudinary } from "cloudinary";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -20,6 +21,8 @@ const equipment_schema = z.object({
     service_id: z.string().optional(),
     repartition_id: z.string().optional(),
     deleted_image_ids: z.array(z.string()).optional(),
+    observations: z.string().optional(), // Added nullable string field
+    extra_fields: z.record(z.any()).optional(), // Added nullable JSON field
 });
 
 export async function GET(
@@ -80,6 +83,8 @@ export async function PUT(
             deleted_image_ids: formData.get("deleted_image_ids")
                 ? JSON.parse(formData.get("deleted_image_ids") as string)
                 : [],
+            observations: formData.get("observations") as string | undefined, // Added observations
+            extra_fields: formData.get("extra_fields") ? JSON.parse(formData.get("extra_fields") as string) : undefined,
         };
 
         const validatedData = equipment_schema.parse(data);
@@ -181,6 +186,8 @@ export async function PUT(
                 sector_id: validatedData.sector_id || null,
                 service_id: validatedData.service_id || null,
                 repartition_id: validatedData.repartition_id || null,
+                observations: validatedData.observations || null, // Added observations
+                extra_fields: validatedData.extra_fields || Prisma.JsonNull, // Added extra_fields
                 images: uploadedImages.length > 0
                     ? {
                         create: uploadedImages.map((img) => ({

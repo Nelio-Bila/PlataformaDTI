@@ -8,7 +8,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "seed": "npx ts-node prisma/seed.js"
+    "seed": "pnpm dlx ts-node prisma/seed.js"
   },
   "dependencies": {
     "@auth/core": "^0.37.4",
@@ -89,6 +89,6 @@
     "typescript": "^5.7.3"
   },
   "prisma": {
-    "seed": "ts-node --esm prisma/seed.js"
+    "seed": "pnpm dlx ts-node --esm prisma/seed.js"
   }
 }

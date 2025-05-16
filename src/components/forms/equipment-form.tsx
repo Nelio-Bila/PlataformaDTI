@@ -25,6 +25,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
@@ -35,22 +36,21 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Department, Direction, Repartition, Sector, Service } from "@prisma/client";
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
   Calendar,
   Camera,
   Check,
   ChevronsUpDown,
+  FileText,
   Hash,
   Hospital,
   Loader2,
   MonitorSmartphone,
+  Plus,
   Tag,
+  Trash2,
   Upload,
   Wrench,
 } from "lucide-react";
@@ -75,6 +75,22 @@ const equipment_schema = z.object({
   sector_id: z.string().optional(),
   service_id: z.string().optional(),
   repartition_id: z.string().optional(),
+  observations: z.string().optional(),
+  extra_fields: z
+    .string()
+    .optional()
+    .refine(
+      (val) => {
+        if (!val) return true;
+        try {
+          JSON.parse(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: "Deve ser um JSON válido" }
+    ),
 });
 
 export type EquipmentFormData = z.infer<typeof equipment_schema>;
@@ -97,6 +113,11 @@ const typeOptions = [
   { value: "UPS", label: "Nobreak (UPS)" },
 ] as const;
 
+interface KeyValuePair {
+  key: string;
+  value: string;
+}
+
 export function EquipmentForm() {
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -111,6 +132,10 @@ export function EquipmentForm() {
   const [isServiceOpen, setIsServiceOpen] = useState(false);
   const [isRepartitionOpen, setIsRepartitionOpen] = useState(false);
   const [isTypeOpen, setIsTypeOpen] = useState(false);
+  const [keyValuePairs, setKeyValuePairs] = useState<KeyValuePair[]>([]);
+  const [newKey, setNewKey] = useState("");
+  const [newValue, setNewValue] = useState("");
+
   const form = useForm<EquipmentFormData>({
     resolver: zodResolver(equipment_schema),
     defaultValues: {
@@ -126,6 +151,8 @@ export function EquipmentForm() {
       sector_id: "",
       service_id: "",
       repartition_id: "",
+      observations: "",
+      extra_fields: "",
     },
   });
 
@@ -138,37 +165,40 @@ export function EquipmentForm() {
   // Fetch Directions
   const { data: directions = [], isLoading: isDirectionsLoading } = useQuery({
     queryKey: ["directions"],
-    queryFn: () => fetch("/api/equipment/directions").then(res => res.json()),
+    queryFn: () => fetch("/api/equipment/directions").then((res) => res.json()),
   });
 
   // Fetch Departments based on selected direction
   const selectedDirectionId = form.watch("direction_id");
   const { data: departments = [], isLoading: isDepartmentsLoading } = useQuery({
     queryKey: ["departments", selectedDirectionId],
-    queryFn: () => fetch(`/api/equipment/departments/${selectedDirectionId}`).then(res => res.json()),
-    enabled: !!selectedDirectionId, // Only fetch if directionId exists
+    queryFn: () => fetch(`/api/equipment/departments/${selectedDirectionId}`).then((res) => res.json()),
+    enabled: !!selectedDirectionId,
   });
 
   // Fetch Sectors based on selected department
   const selectedDepartmentId = form.watch("department_id");
   const { data: sectors = [], isLoading: isSectorsLoading } = useQuery({
     queryKey: ["sectors", selectedDepartmentId],
-    queryFn: () => fetch(`/api/equipment/sectors/${selectedDepartmentId}`).then(res => res.json()),
-    enabled: !!selectedDepartmentId, // Only fetch if departmentId exists
+    queryFn: () => fetch(`/api/equipment/sectors/${selectedDepartmentId}`).then((res) => res.json()),
+    enabled: !!selectedDepartmentId,
   });
 
   // Fetch Repartitions based on selected department
   const { data: repartitions = [], isLoading: isRepartitionsLoading } = useQuery({
     queryKey: ["repartitions", selectedDepartmentId],
-    queryFn: () => fetch(`/api/equipment/repartitions/${selectedDepartmentId}`).then(res => res.json()),
-    enabled: !!selectedDepartmentId, // Only fetch if departmentId exists
+    queryFn: () => fetch(`/api/equipment/repartitions/${selectedDepartmentId}`).then((res) => res.json()),
+    enabled: !!selectedDepartmentId,
   });
 
   // Fetch Services based on direction and department
   const { data: services = [], isLoading: isServicesLoading } = useQuery({
     queryKey: ["services", selectedDirectionId, selectedDepartmentId],
-    queryFn: () => fetch(`/api/equipment/services?directionId=${selectedDirectionId || ""}&departmentId=${selectedDepartmentId || ""}`).then(res => res.json()),
-    enabled: !!selectedDirectionId || !!selectedDepartmentId, // Only fetch if either exists
+    queryFn: () =>
+      fetch(`/api/equipment/services?directionId=${selectedDirectionId || ""}&departmentId=${selectedDepartmentId || ""}`).then(
+        (res) => res.json()
+      ),
+    enabled: !!selectedDirectionId || !!selectedDepartmentId,
   });
 
   // Mutation for creating equipment
@@ -188,11 +218,11 @@ export function EquipmentForm() {
       queryClient.invalidateQueries({ queryKey: ["equipment"] });
       form.reset();
       setFiles([]);
+      setKeyValuePairs([]);
       toast({
         title: "Sucesso!",
         description: "Equipamento registrado com sucesso",
       });
-      console.log(data)
       router.push("/equipments");
     },
     onError: (error: Error) => {
@@ -200,13 +230,58 @@ export function EquipmentForm() {
     },
   });
 
+  const handleAddKeyValuePair = () => {
+    if (newKey.trim() && newValue.trim()) {
+      setKeyValuePairs([...keyValuePairs, { key: newKey.trim(), value: newValue.trim() }]);
+      setNewKey("");
+      setNewValue("");
+    }
+  };
 
+  const handleRemoveKeyValuePair = (index: number) => {
+    setKeyValuePairs(keyValuePairs.filter((_, i) => i !== index));
+  };
+
+  const handleEditKeyValuePair = (index: number, field: "key" | "value", newValue: string) => {
+    const updatedPairs = [...keyValuePairs];
+    updatedPairs[index] = { ...updatedPairs[index], [field]: newValue };
+    setKeyValuePairs(updatedPairs);
+  };
 
   const on_submit = (values: EquipmentFormData) => {
     const formData = new FormData();
-    Object.entries(values).forEach(([key, value]) => {
-      if (value !== undefined) formData.append(key, value);
+    // Explicitly include all fields, using empty string for optional fields if not set
+    const fields: Record<string, string | undefined> = {
+      serial_number: values.serial_number,
+      type: values.type,
+      brand: values.brand,
+      model: values.model,
+      purchase_date: values.purchase_date || "",
+      warranty_end: values.warranty_end || "",
+      status: values.status,
+      direction_id: values.direction_id || "",
+      department_id: values.department_id || "",
+      sector_id: values.sector_id || "",
+      service_id: values.service_id || "",
+      repartition_id: values.repartition_id || "",
+      observations: values.observations || "",
+    };
+
+    Object.entries(fields).forEach(([key, value]) => {
+      if (value !== undefined && value !== "") {
+        formData.append(key, value);
+      }
     });
+
+    // Convert key-value pairs to JSON string
+    if (keyValuePairs.length > 0) {
+      const extraFieldsObj = keyValuePairs.reduce((acc, pair) => {
+        acc[pair.key] = pair.value;
+        return acc;
+      }, {} as Record<string, string>);
+      formData.append("extra_fields", JSON.stringify(extraFieldsObj));
+    }
+
     files.forEach((file) => formData.append("images", file));
 
     mutation.mutate(formData);
@@ -225,9 +300,7 @@ export function EquipmentForm() {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
-    const droppedFiles = Array.from(e.dataTransfer.files).filter((file) =>
-      file.type.startsWith("image/")
-    );
+    const droppedFiles = Array.from(e.dataTransfer.files).filter((file) => file.type.startsWith("image/"));
     setFiles((prev) => [...prev, ...droppedFiles]);
   };
 
@@ -238,18 +311,17 @@ export function EquipmentForm() {
 
   const removeFile = (index: number) => {
     setFiles((prev) => {
-      const fileToRemove = prev[index]; // Get the File object to remove
+      const fileToRemove = prev[index];
       const newFiles = prev.filter((_, i) => i !== index);
-
-      // Revoke the blob URL for the removed file
       if (fileToRemove) {
         URL.revokeObjectURL(URL.createObjectURL(fileToRemove));
       }
-
       return newFiles;
     });
   };
 
+  // Rest of the component remains unchanged (UI rendering, form fields, etc.)
+  // ... [Previous rendering code for form fields, images, etc., remains the same]
   return (
     <TooltipProvider>
       <Form {...form}>
@@ -527,6 +599,118 @@ export function EquipmentForm() {
                 </FormItem>
               )}
             />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="observations"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1">
+                    <FileText className="h-4 w-4" />
+                    Observações
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <AlertCircle className="h-4 w-4 text-gray-500" />
+                      </TooltipTrigger>
+                      <TooltipContent>Notas adicionais sobre o equipamento</TooltipContent>
+                    </Tooltip>
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Digite observações sobre o equipamento"
+                      {...field}
+                      onBlur={() => form.trigger("observations")}
+                      aria-describedby="observations-description"
+                      className="min-h-[100px]"
+                    />
+                  </FormControl>
+                  <FormDescription id="observations-description">
+                    Informações adicionais, como condições ou histórico.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div>
+              <FormField
+                control={form.control}
+                name="extra_fields"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1">
+                      <Tag className="h-4 w-4" />
+                      Campos Extras
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <AlertCircle className="h-4 w-4 text-gray-500" />
+                        </TooltipTrigger>
+                        <TooltipContent>Adicione pares chave-valor para dados adicionais</TooltipContent>
+                      </Tooltip>
+                    </FormLabel>
+                    <div className="space-y-4">
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Chave"
+                          value={newKey}
+                          onChange={(e) => setNewKey(e.target.value)}
+                          aria-describedby="extra_fields-key-description"
+                        />
+                        <Input
+                          placeholder="Valor"
+                          value={newValue}
+                          onChange={(e) => setNewValue(e.target.value)}
+                          aria-describedby="extra_fields-value-description"
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleAddKeyValuePair}
+                          disabled={!newKey.trim() || !newValue.trim()}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Adicionar
+                        </Button>
+                      </div>
+                      {keyValuePairs.length > 0 && (
+                        <div className="border rounded-lg p-4">
+                          <ul className="space-y-2">
+                            {keyValuePairs.map((pair, index) => (
+                              <li key={index} className="flex items-center gap-2">
+                                <Input
+                                  value={pair.key}
+                                  onChange={(e) => handleEditKeyValuePair(index, "key", e.target.value)}
+                                  className="flex-1"
+                                  placeholder="Chave"
+                                />
+                                <Input
+                                  value={pair.value}
+                                  onChange={(e) => handleEditKeyValuePair(index, "value", e.target.value)}
+                                  className="flex-1"
+                                  placeholder="Valor"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleRemoveKeyValuePair(index)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                    <FormDescription id="extra_fields-description">
+                      Adicione pares chave-valor para informações extras, como cor ou peso.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
 
           <div className="space-y-4">

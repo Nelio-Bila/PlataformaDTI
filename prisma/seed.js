@@ -409,7 +409,7 @@ async function main() {
 
     // Seed Departments under Direção Administrativa
     const departmentsAdministrativaData = [
-        { name: "Controle Interno", direction_id: directionAdministrativa.id },
+        { name: "Auditoria Interna", direction_id: directionAdministrativa.id },
         { name: "Planejamento e Estatística", direction_id: directionAdministrativa.id },
         { name: "Recursos Humanos", direction_id: directionAdministrativa.id },
         { name: "Financeiro", direction_id: directionAdministrativa.id },
@@ -548,7 +548,7 @@ async function main() {
         { name: "Contabilidade", department_id: deptFinanceiro.id },
         { name: "Atendimento a Empresas", department_id: deptFinanceiro.id },
         { name: "Direcção do DF", department_id: deptFinanceiro.id },
-        { name: "Gestão Orçamental", department_id: deptFinanceiro.id },
+        { name: "Execução Orçamental", department_id: deptFinanceiro.id },
         { name: "Relações Públicas", department_id: deptRecursosHumanos.id },
         { name: "Secretaria RH", department_id: deptRecursosHumanos.id },
         { name: "Direcção dos RH", department_id: deptRecursosHumanos.id },
