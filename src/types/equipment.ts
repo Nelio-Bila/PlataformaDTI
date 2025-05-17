@@ -43,6 +43,7 @@ export type FilterOptions = {
   statuses: string[];
   directions: Direction[];
   departments: Department[];
+  users: { id: string; name: string | null }[];
 };
 
 export type FiltersState = {
@@ -50,6 +51,7 @@ export type FiltersState = {
   status: string[];
   direction_id: string[];
   department_id: string[];
+  registered_by: string[]; 
 };
 
 export const typeOptions = [

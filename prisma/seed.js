@@ -570,7 +570,7 @@ async function main() {
 
     // Seed Users
     const usersData = [
-        { email: "nelio.bila@hcm.gov.mz", password: await hash("inatounico", 10), name: "Nélio Bila" },
+        { email: "nelio.bila@hcm.gov.mz", password: await hash("password", 10), name: "Nélio Bila" },
         { email: "luciano.aguiar@hcm.gov.mz", password: await hash("password", 10), name: "Luciano Aguiar" },
         { email: "stela.davane@hcm.gov.mz", password: await hash("password", 10), name: "Stela Davane" },
         { email: "carolina.sumbana@hcm.gov.mz", password: await hash("password", 10), name: "Carolina Sumbana" },

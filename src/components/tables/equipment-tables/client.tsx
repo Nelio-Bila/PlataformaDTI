@@ -33,7 +33,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
+  Table as TableComponent,
   TableBody,
   TableCell,
   TableHead,
@@ -51,8 +51,10 @@ import {
   getSortedRowModel,
   useReactTable,
   VisibilityState,
+  Table,
+  Row,
 } from "@tanstack/react-table";
-import { BadgeAlertIcon, BadgeCheckIcon, Clock, Columns, Edit, Eye, FilterX, Hospital, Loader2, MoreHorizontal, Package, PackagePlus, RefreshCw, Sheet, Trash, Trash2 } from "lucide-react";
+import { BadgeAlertIcon, BadgeCheckIcon, Clock, Columns, Edit, Eye, FilterX, Hospital, Loader2, MoreHorizontal, Package, PackagePlus, RefreshCw, Sheet, Trash, Trash2, User } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -65,6 +67,10 @@ interface FilterOption {
   value: string;
   label: string;
   icon?: React.ComponentType<{ className: string }>;
+}
+
+interface ColumnMeta {
+  title: string;
 }
 
 export function EquipmentClient() {
@@ -88,6 +94,7 @@ export function EquipmentClient() {
         status: searchParams.get("status")?.split(",") || [],
         direction_id: searchParams.get("direction")?.split(",") || [],
         department_id: searchParams.get("department")?.split(",") || [],
+        registered_by: searchParams.get("registered_by")?.split(",") || [],
       },
     }),
     [searchParams]
@@ -114,9 +121,10 @@ export function EquipmentClient() {
     actions: true,
   });
 
-  // Check permissions from session
+  // Check permissions and group membership
   const userGroups = session?.user?.groups || [];
   const hasEquipmentReadPermission = userGroups.some(group => group.permissions.includes("equipment:read"));
+  const isAdmin = userGroups.some(group => group.name.toLowerCase() === "admins");
 
   // Fetch equipment data
   const { data: equipmentData, isLoading: isEquipmentLoading, error: equipmentError, refetch } = useQuery({
@@ -132,6 +140,7 @@ export function EquipmentClient() {
         ...(filters.status.length > 0 && { status: filters.status.join(",") }),
         ...(filters.direction_id.length > 0 && { direction_id: filters.direction_id.join(",") }),
         ...(filters.department_id.length > 0 && { department_id: filters.department_id.join(",") }),
+        ...(filters.registered_by.length > 0 && { registered_by: filters.registered_by.join(",") }),
       });
       const response = await fetch(`/api/equipment?${params.toString()}`);
       if (!response.ok) {
@@ -176,223 +185,262 @@ export function EquipmentClient() {
   });
 
   const columns = useMemo<ColumnDef<Equipment>[]>(
-    () => [
-      {
-        id: "select",
-        header: ({ table }) => (
-          <Checkbox
-            checked={table.getIsAllPageRowsSelected()}
-            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-            aria-label="Selecionar todos"
-          />
-        ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Selecionar linha"
-          />
-        ),
-        enableSorting: false,
-      },
-      {
-        accessorFn: (row) => row.serial_number,
-        id: "serial_number",
-        header: () => (
-          <TableSortHeader
-            title="Número de Série"
-            sort={sorting[0]?.id === "serial_number" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-            onClick={() => {
-              setSorting([
-                {
-                  id: "serial_number",
-                  desc: sorting[0]?.id === "serial_number" && !sorting[0]?.desc ? true : false,
-                },
-              ]);
-              refetch();
-            }}
-          />
-        ),
-        cell: ({ row }) => row.getValue("serial_number") || "N/D",
-      },
-      {
-        accessorFn: (row) => row.type,
-        id: "type",
-        header: () => (
-          <TableSortHeader
-            title="Tipo"
-            sort={sorting[0]?.id === "type" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-            onClick={() => {
-              setSorting([
-                {
-                  id: "type",
-                  desc: sorting[0]?.id === "type" && !sorting[0]?.desc ? true : false,
-                },
-              ]);
-              refetch();
-            }}
-          />
-        ),
-        cell: ({ row }) => row.getValue("type"),
-      },
-      {
-        accessorFn: (row) => row.brand,
-        id: "brand",
-        header: () => (
-          <TableSortHeader
-            title="Marca"
-            sort={sorting[0]?.id === "brand" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-            onClick={() => {
-              setSorting([
-                {
-                  id: "brand",
-                  desc: sorting[0]?.id === "brand" && !sorting[0]?.desc ? true : false,
-                },
-              ]);
-              refetch();
-            }}
-          />
-        ),
-        cell: ({ row }) => row.getValue("brand"),
-      },
-      {
-        accessorFn: (row) => row.model,
-        id: "model",
-        header: () => (
-          <TableSortHeader
-            title="Modelo"
-            sort={sorting[0]?.id === "model" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-            onClick={() => {
-              setSorting([
-                {
-                  id: "model",
-                  desc: sorting[0]?.id === "model" && !sorting[0]?.desc ? true : false,
-                },
-              ]);
-              refetch();
-            }}
-          />
-        ),
-        cell: ({ row }) => row.getValue("model"),
-      },
-      {
-        accessorFn: (row) => row.status,
-        id: "status",
-        header: () => (
-          <TableSortHeader
-            title="Status"
-            sort={sorting[0]?.id === "status" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-            onClick={() => {
-              setSorting([
-                {
-                  id: "status",
-                  desc: sorting[0]?.id === "status" && !sorting[0]?.desc ? true : false,
-                },
-              ]);
-              refetch();
-            }}
-          />
-        ),
-        cell: ({ row }) => row.getValue("status"),
-      },
-      {
-        accessorFn: (row) => row.direction?.name,
-        id: "direction",
-        header: () => (
-          <TableSortHeader
-            title="Direção"
-            sort={sorting[0]?.id === "direction" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-            onClick={() => {
-              setSorting([
-                {
-                  id: "direction",
-                  desc: sorting[0]?.id === "direction" && !sorting[0]?.desc ? true : false,
-                },
-              ]);
-              refetch();
-            }}
-          />
-        ),
-        cell: ({ row }) => row.getValue("direction") || "N/D",
-      },
-      {
-        accessorFn: (row) => row.department?.name,
-        id: "department",
-        header: () => (
-          <TableSortHeader
-            title="Departamento"
-            sort={sorting[0]?.id === "department" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-            onClick={() => {
-              setSorting([
-                {
-                  id: "department",
-                  desc: sorting[0]?.id === "department" && !sorting[0]?.desc ? true : false,
-                },
-              ]);
-              refetch();
-            }}
-          />
-        ),
-        cell: ({ row }) => row.getValue("department") || "N/D",
-      },
-      {
-        accessorFn: (row) => row.created_at,
-        id: "created_at",
-        header: () => (
-          <TableSortHeader
-            title="Criado Em"
-            sort={sorting[0]?.id === "created_at" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-            onClick={() => {
-              setSorting([
-                {
-                  id: "created_at",
-                  desc: sorting[0]?.id === "created_at" && !sorting[0]?.desc ? true : false,
-                },
-              ]);
-              refetch();
-            }}
-          />
-        ),
-        cell: ({ row }) => new Date(row.getValue("created_at")).toLocaleDateString("pt-BR"),
-      },
-      {
-        id: "actions",
-        header: "",
-        cell: ({ row }) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Ações</DropdownMenuLabel>
-              <DropdownMenuItem className="flex flex-nowrap gap-2">
-                <Eye />
-                <Link href={`/equipments/${row.original.id}`}>Ver Detalhes</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link href={`/equipments/update/${row.original.id}`} className="flex flex-nowrap gap-2">
-                  <Edit />
-                  <span>Editar</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => {
-                  setItemToDelete(row.original.id);
-                  setDeleteDialogOpen(true);
-                }}
-                className="text-red-600 flex flex-nowrap gap-2"
-              >
-                <Trash />
-                <span>Excluir</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ),
-      },
-    ],
-    [refetch, sorting]
+    () => {
+      const baseColumns: ColumnDef<Equipment>[] = [
+        {
+          id: "select",
+          header: ({ table }: { table: Table<Equipment> }) => (
+            <Checkbox
+              checked={table.getIsAllPageRowsSelected()}
+              onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+              aria-label="Selecionar todos"
+            />
+          ),
+          cell: ({ row }: { row: Row<Equipment> }) => (
+            <Checkbox
+              checked={row.getIsSelected()}
+              onCheckedChange={(value) => row.toggleSelected(!!value)}
+              aria-label="Selecionar linha"
+            />
+          ),
+          enableSorting: false,
+          meta: { title: "Selecionar" } as ColumnMeta,
+        },
+        {
+          accessorFn: (row) => row.serial_number,
+          id: "serial_number",
+          header: () => (
+            <TableSortHeader
+              title="Número de Série"
+              sort={sorting[0]?.id === "serial_number" ? (sorting[0]?.desc ? "desc" : "asc") : null}
+              onClick={() => {
+                setSorting([
+                  {
+                    id: "serial_number",
+                    desc: sorting[0]?.id === "serial_number" && !sorting[0]?.desc ? true : false,
+                  },
+                ]);
+                refetch();
+              }}
+            />
+          ),
+          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("serial_number") || "N/D",
+          meta: { title: "Número de Série" } as ColumnMeta,
+        },
+        {
+          accessorFn: (row) => row.type,
+          id: "type",
+          header: () => (
+            <TableSortHeader
+              title="Tipo"
+              sort={sorting[0]?.id === "type" ? (sorting[0]?.desc ? "desc" : "asc") : null}
+              onClick={() => {
+                setSorting([
+                  {
+                    id: "type",
+                    desc: sorting[0]?.id === "type" && !sorting[0]?.desc ? true : false,
+                  },
+                ]);
+                refetch();
+              }}
+            />
+          ),
+          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("type"),
+          meta: { title: "Tipo" } as ColumnMeta,
+        },
+        {
+          accessorFn: (row) => row.brand,
+          id: "brand",
+          header: () => (
+            <TableSortHeader
+              title="Marca"
+              sort={sorting[0]?.id === "brand" ? (sorting[0]?.desc ? "desc" : "asc") : null}
+              onClick={() => {
+                setSorting([
+                  {
+                    id: "brand",
+                    desc: sorting[0]?.id === "brand" && !sorting[0]?.desc ? true : false,
+                  },
+                ]);
+                refetch();
+              }}
+            />
+          ),
+          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("brand"),
+          meta: { title: "Marca" } as ColumnMeta,
+        },
+        {
+          accessorFn: (row) => row.model,
+          id: "model",
+          header: () => (
+            <TableSortHeader
+              title="Modelo"
+              sort={sorting[0]?.id === "model" ? (sorting[0]?.desc ? "desc" : "asc") : null}
+              onClick={() => {
+                setSorting([
+                  {
+                    id: "model",
+                    desc: sorting[0]?.id === "model" && !sorting[0]?.desc ? true : false,
+                  },
+                ]);
+                refetch();
+              }}
+            />
+          ),
+          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("model"),
+          meta: { title: "Modelo" } as ColumnMeta,
+        },
+        {
+          accessorFn: (row) => row.status,
+          id: "status",
+          header: () => (
+            <TableSortHeader
+              title="Status"
+              sort={sorting[0]?.id === "status" ? (sorting[0]?.desc ? "desc" : "asc") : null}
+              onClick={() => {
+                setSorting([
+                  {
+                    id: "status",
+                    desc: sorting[0]?.id === "status" && !sorting[0]?.desc ? true : false,
+                  },
+                ]);
+                refetch();
+              }}
+            />
+          ),
+          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("status"),
+          meta: { title: "Status" } as ColumnMeta,
+        },
+        {
+          accessorFn: (row) => row.direction?.name,
+          id: "direction",
+          header: () => (
+            <TableSortHeader
+              title="Direção"
+              sort={sorting[0]?.id === "direction" ? (sorting[0]?.desc ? "desc" : "asc") : null}
+              onClick={() => {
+                setSorting([
+                  {
+                    id: "direction",
+                    desc: sorting[0]?.id === "direction" && !sorting[0]?.desc ? true : false,
+                  },
+                ]);
+                refetch();
+              }}
+            />
+          ),
+          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("direction") || "N/D",
+          meta: { title: "Direção" } as ColumnMeta,
+        },
+        {
+          accessorFn: (row) => row.department?.name,
+          id: "department",
+          header: () => (
+            <TableSortHeader
+              title="Departamento"
+              sort={sorting[0]?.id === "department" ? (sorting[0]?.desc ? "desc" : "asc") : null}
+              onClick={() => {
+                setSorting([
+                  {
+                    id: "department",
+                    desc: sorting[0]?.id === "department" && !sorting[0]?.desc ? true : false,
+                  },
+                ]);
+                refetch();
+              }}
+            />
+          ),
+          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("department") || "N/D",
+          meta: { title: "Departamento" } as ColumnMeta,
+        },
+        {
+          accessorFn: (row) => row.created_at,
+          id: "created_at",
+          header: () => (
+            <TableSortHeader
+              title="Criado Em"
+              sort={sorting[0]?.id === "created_at" ? (sorting[0]?.desc ? "desc" : "asc") : null}
+              onClick={() => {
+                setSorting([
+                  {
+                    id: "created_at",
+                    desc: sorting[0]?.id === "created_at" && !sorting[0]?.desc ? true : false,
+                  },
+                ]);
+                refetch();
+              }}
+            />
+          ),
+          cell: ({ row }: { row: Row<Equipment> }) => new Date(row.getValue("created_at")).toLocaleDateString("pt-BR"),
+          meta: { title: "Criado Em" } as ColumnMeta,
+        },
+        {
+          id: "actions",
+          header: "",
+          cell: ({ row }: { row: Row<Equipment> }) => (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                <DropdownMenuItem className="flex flex-nowrap gap-2">
+                  <Eye />
+                  <Link href={`/equipments/${row.original.id}`}>Ver Detalhes</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link href={`/equipments/update/${row.original.id}`} className="flex flex-nowrap gap-2">
+                    <Edit />
+                    <span>Editar</span>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setItemToDelete(row.original.id);
+                    setDeleteDialogOpen(true);
+                  }}
+                  className="text-red-600 flex flex-nowrap gap-2"
+                >
+                  <Trash />
+                  <span>Excluir</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ),
+          meta: { title: "Ações" } as ColumnMeta,
+        },
+      ];
+
+      // Conditionally add registered_by column for admins
+      if (isAdmin) {
+        baseColumns.splice(8, 0, {
+          accessorFn: (row) => row.registeredBy?.name,
+          id: "registered_by",
+          header: () => (
+            <TableSortHeader
+              title="Registrado Por"
+              sort={sorting[0]?.id === "registered_by" ? (sorting[0]?.desc ? "desc" : "asc") : null}
+              onClick={() => {
+                setSorting([
+                  {
+                    id: "registered_by",
+                    desc: sorting[0]?.id === "registered_by" && !sorting[0]?.desc ? true : false,
+                  },
+                ]);
+                refetch();
+              }}
+            />
+          ),
+          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("registered_by") || "N/D",
+          meta: { title: "Registrado Por" } as ColumnMeta,
+        });
+      }
+
+      return baseColumns;
+    },
+    [refetch, sorting, isAdmin]
   );
 
   const equipmentTypeOptions: FilterOption[] = (filterOptions?.types || []).map((type) => ({
@@ -406,11 +454,11 @@ export function EquipmentClient() {
     label: status,
     icon: ({ className }) => {
       switch (status.toUpperCase()) {
-        case "OPERATIONAL":
+        case "ACTIVO":
           return <BadgeCheckIcon className={className} />;
-        case "MAINTENANCE":
+        case "MANUTENÇÃO":
           return <Loader2 className={className} />;
-        case "BROKEN":
+        case "INACTIVO":
           return <BadgeAlertIcon className={className} />;
         default:
           return <Clock className={className} />;
@@ -435,6 +483,12 @@ export function EquipmentClient() {
       label: department.name,
       icon: ({ className }) => <Hospital className={className} />,
     }));
+
+  const registeredByOptions: FilterOption[] = (filterOptions?.users || []).map((user) => ({
+    value: user.id,
+    label: user.name || "Sem Nome",
+    icon: ({ className }) => <User className={className} />,
+  }));
 
   const table = useReactTable({
     data: equipmentData?.data || [],
@@ -469,6 +523,7 @@ export function EquipmentClient() {
     if (filters.status.length > 0) params.set("status", filters.status.join(","));
     if (filters.direction_id.length > 0) params.set("direction", filters.direction_id.join(","));
     if (filters.department_id.length > 0) params.set("department", filters.department_id.join(","));
+    if (filters.registered_by.length > 0) params.set("registered_by", filters.registered_by.join(","));
 
     router.push(`?${params.toString()}`, { scroll: false });
   }, [pageIndex, pageSize, sorting, globalFilter, filters, router]);
@@ -491,6 +546,7 @@ export function EquipmentClient() {
       status: [],
       direction_id: [],
       department_id: [],
+      registered_by: [],
     });
     setPageIndex(0);
     refetch();
@@ -506,6 +562,7 @@ export function EquipmentClient() {
       if (columnVisibility["status"]) rowData["Status"] = row.original.status;
       if (columnVisibility["direction"]) rowData["Direção"] = row.original.direction?.name || "N/D";
       if (columnVisibility["department"]) rowData["Departamento"] = row.original.department?.name || "N/D";
+      if (isAdmin && columnVisibility["registered_by"]) rowData["Registrado Por"] = row.original.registeredBy?.name || "N/D";
       if (columnVisibility["created_at"])
         rowData["Criado Em"] = new Date(row.original.created_at).toLocaleDateString("pt-BR");
       return rowData;
@@ -515,7 +572,7 @@ export function EquipmentClient() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Equipamentos");
     XLSX.writeFile(workbook, `exportacao_equipamentos_${new Date().toISOString().slice(0, 10)}.xlsx`);
-  }, [table, columnVisibility]);
+  }, [table, columnVisibility, isAdmin]);
 
   if (status === "loading" || isEquipmentLoading || isFilterLoading) {
     return <EquipmentClientSkeleton />;
@@ -611,7 +668,7 @@ export function EquipmentClient() {
                 checked={column.getIsVisible()}
                 onCheckedChange={(value) => column.toggleVisibility(!!value)}
               >
-                {column.columnDef.header as string}
+                {(column.columnDef.meta as ColumnMeta | undefined)?.title || column.id}
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>
@@ -709,6 +766,27 @@ export function EquipmentClient() {
           }}
           setTimeDebounce={() => {}}
         />
+        {isAdmin && (
+          <TableFilter
+            title="Registrado Por"
+            filter="registered_by"
+            options={registeredByOptions}
+            params={{
+              filters: Object.entries(filters).flatMap(([key, values]) =>
+                values.map((value: string) => `${key}:${value}`)
+              ),
+            }}
+            setParams={(newParams: { filters: string[] }) => {
+              const registeredByFilters = newParams.filters
+                .filter((f) => f.startsWith("registered_by:"))
+                .map((f) => f.split(":")[1]);
+              setFilters((prev) => ({ ...prev, registered_by: registeredByFilters }));
+              setPageIndex(0);
+              refetch();
+            }}
+            setTimeDebounce={() => {}}
+          />
+        )}
         <Button
           variant="outline"
           size="sm"
@@ -722,7 +800,7 @@ export function EquipmentClient() {
 
       <div className="relative rounded-md border">
         <div className="overflow-x-auto">
-          <Table>
+          <TableComponent>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
@@ -753,7 +831,7 @@ export function EquipmentClient() {
                 </TableRow>
               )}
             </TableBody>
-          </Table>
+          </TableComponent>
         </div>
       </div>
 

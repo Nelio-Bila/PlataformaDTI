@@ -1,3 +1,4 @@
+// src/app/api/equipment/route.ts
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
@@ -12,6 +13,7 @@ type FetchEquipmentParams = {
   status?: string;
   direction_id?: string;
   department_id?: string;
+  registered_by?: string; // Add registered_by
 };
 
 export async function GET(request: Request) {
@@ -52,7 +54,7 @@ export async function GET(request: Request) {
           service: true,
           repartition: true,
           images: true,
-          registeredBy: true,
+          registeredBy: { select: { id: true, name: true } }, // Include registeredBy
         },
       });
       if (!equipment) {
@@ -79,6 +81,7 @@ export async function GET(request: Request) {
     status: url.searchParams.get("status") || undefined,
     direction_id: url.searchParams.get("direction_id") || undefined,
     department_id: url.searchParams.get("department_id") || undefined,
+    registered_by: url.searchParams.get("registered_by") || undefined, // Add registered_by
   };
 
   const skip = params.page * params.page_size;
@@ -112,6 +115,11 @@ export async function GET(request: Request) {
     where.department_id = { in: departmentIds };
   }
 
+  if (params.registered_by) {
+    const registeredByIds = params.registered_by.split(",");
+    where.registered_by = { in: registeredByIds };
+  }
+
   try {
     const [data, total] = await Promise.all([
       db.equipment.findMany({
@@ -126,6 +134,7 @@ export async function GET(request: Request) {
           service: true,
           repartition: true,
           images: true,
+          registeredBy: { select: { id: true, name: true } }, // Include registeredBy
         },
       }),
       db.equipment.count({ where }),

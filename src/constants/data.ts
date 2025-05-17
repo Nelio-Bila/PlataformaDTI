@@ -1,3 +1,4 @@
+// src\constants\data.ts
 import { NavItem } from "@/types";
 
 export const navItems: NavItem[] = [
