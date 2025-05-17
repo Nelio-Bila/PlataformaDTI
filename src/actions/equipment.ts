@@ -1,8 +1,8 @@
 // actions/equipment.ts
 "use server";
 
-import { EquipmentFormData } from "@/components/forms/equipment-form";
 import { db } from "@/lib/db";
+import { EquipmentFormData } from "@/types/equipment";
 import { v2 as cloudinary } from 'cloudinary';
 
 type FetchEquipmentParams = {
