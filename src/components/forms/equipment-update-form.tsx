@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { equipment_schema } from "@/schemas/equipment";
+import { EquipmentFormData, EquipmentImage, EquipmentUpdateFormProps, statusOptions, typeOptions } from "@/types/equipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Department, Direction, Repartition, Sector, Service } from "@prisma/client";
 import {
@@ -59,71 +61,7 @@ import Image from "next/image";
 import { useRouter } from "nextjs-toploader/app";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 
-type EquipmentImage = {
-    id: string;
-    url: string;
-    description: string;
-    cloudinary_public_id: string;
-};
-
-const equipment_schema = z.object({
-    serial_number: z.string().min(1, { message: "Número de série é obrigatório" }),
-    type: z.string().min(1, { message: "Tipo é obrigatório" }),
-    brand: z.string().min(1, { message: "Marca é obrigatória" }),
-    model: z.string().min(1, { message: "Modelo é obrigatório" }),
-    purchase_date: z.string().optional(),
-    warranty_end: z.string().optional(),
-    status: z.enum(["ACTIVO", "MANUTENÇÃO", "INACTIVO"], {
-        required_error: "Status é obrigatório",
-    }),
-    direction_id: z.string().optional(),
-    department_id: z.string().optional(),
-    sector_id: z.string().optional(),
-    service_id: z.string().optional(),
-    repartition_id: z.string().optional(),
-    observations: z.string().optional(),
-      extra_fields: z
-        .string()
-        .optional()
-        .refine(
-          (val) => {
-            if (!val) return true;
-            try {
-              JSON.parse(val);
-              return true;
-            } catch {
-              return false;
-            }
-          },
-          { message: "Deve ser um JSON válido" }
-        ),
-});
-
-export type EquipmentFormData = z.infer<typeof equipment_schema>;
-
-const statusOptions = [
-    { value: "ACTIVO", label: "Activo" },
-    { value: "MANUTENÇÃO", label: "Manutenção" },
-    { value: "INACTIVO", label: "Inactivo" },
-] as const;
-
-const typeOptions = [
-    { value: "PRINTER", label: "Impressora" },
-    { value: "SWITCH", label: "Switch" },
-    { value: "MONITOR", label: "Monitor" },
-    { value: "PC", label: "Computador (PC)" },
-    { value: "PROJECTOR", label: "Projetor (Data Show)" },
-    { value: "SPEAKERS", label: "Caixas de Som" },
-    { value: "CAMERA", label: "Câmera" },
-    { value: "ROUTER", label: "Roteador" },
-    { value: "UPS", label: "Nobreak (UPS)" },
-] as const;
-
-interface EquipmentUpdateFormProps {
-    equipmentId: string;
-}
 
 export function EquipmentUpdateForm({ equipmentId }: EquipmentUpdateFormProps) {
     const queryClient = useQueryClient();
@@ -576,6 +514,7 @@ export function EquipmentUpdateForm({ equipmentId }: EquipmentUpdateFormProps) {
                                         <Input
                                             type="date"
                                             {...field}
+                                            value={field.value ?? ''}
                                             onBlur={() => form.trigger("purchase_date")}
                                             aria-describedby="purchase_date-description"
                                         />
@@ -598,6 +537,7 @@ export function EquipmentUpdateForm({ equipmentId }: EquipmentUpdateFormProps) {
                                         <Input
                                             type="date"
                                             {...field}
+                                            value={field.value ?? ''}
                                             onBlur={() => form.trigger("warranty_end")}
                                             aria-describedby="warranty_end-description"
                                         />

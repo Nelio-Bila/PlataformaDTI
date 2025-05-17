@@ -34,6 +34,8 @@ import {
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { equipment_schema } from "@/schemas/equipment";
+import { EquipmentFormData, KeyValuePair, statusOptions, typeOptions } from "@/types/equipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Department, Direction, Repartition, Sector, Service } from "@prisma/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -58,65 +60,7 @@ import Image from "next/image";
 import { useRouter } from "nextjs-toploader/app";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 
-const equipment_schema = z.object({
-  serial_number: z.string().min(1, { message: "Número de série é obrigatório" }),
-  type: z.string().min(1, { message: "Tipo é obrigatório" }),
-  brand: z.string().min(1, { message: "Marca é obrigatória" }),
-  model: z.string().min(1, { message: "Modelo é obrigatório" }),
-  purchase_date: z.string().optional(),
-  warranty_end: z.string().optional(),
-  status: z.enum(["ACTIVO", "MANUTENÇÃO", "INACTIVO"], {
-    required_error: "Status é obrigatório",
-  }),
-  direction_id: z.string().optional(),
-  department_id: z.string().optional(),
-  sector_id: z.string().optional(),
-  service_id: z.string().optional(),
-  repartition_id: z.string().optional(),
-  observations: z.string().optional(),
-  extra_fields: z
-    .string()
-    .optional()
-    .refine(
-      (val) => {
-        if (!val) return true;
-        try {
-          JSON.parse(val);
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      { message: "Deve ser um JSON válido" }
-    ),
-});
-
-export type EquipmentFormData = z.infer<typeof equipment_schema>;
-
-const statusOptions = [
-  { value: "ACTIVO", label: "Activo" },
-  { value: "MANUTENÇÃO", label: "Manutenção" },
-  { value: "INACTIVO", label: "Inactivo" },
-] as const;
-
-const typeOptions = [
-  { value: "PRINTER", label: "Impressora" },
-  { value: "SWITCH", label: "Switch" },
-  { value: "MONITOR", label: "Monitor" },
-  { value: "PC", label: "Computador (PC)" },
-  { value: "PROJECTOR", label: "Projetor (Data Show)" },
-  { value: "SPEAKERS", label: "Caixas de Som" },
-  { value: "CAMERA", label: "Câmera" },
-  { value: "ROUTER", label: "Roteador" },
-  { value: "UPS", label: "Nobreak (UPS)" },
-] as const;
-
-interface KeyValuePair {
-  key: string;
-  value: string;
-}
 
 export function EquipmentForm() {
   const queryClient = useQueryClient();
@@ -499,6 +443,7 @@ export function EquipmentForm() {
                     <Input
                       type="date"
                       {...field}
+                      value={field.value ?? ''}
                       onBlur={() => form.trigger("purchase_date")}
                       aria-describedby="purchase_date-description"
                     />
@@ -506,8 +451,7 @@ export function EquipmentForm() {
                   <FormDescription id="purchase_date-description">Data em que o equipamento foi adquirido.</FormDescription>
                   <FormMessage />
                 </FormItem>
-              )}
-            />
+              )}/>
             <FormField
               control={form.control}
               name="warranty_end"
@@ -521,6 +465,7 @@ export function EquipmentForm() {
                     <Input
                       type="date"
                       {...field}
+                      value={field.value ?? ''}
                       onBlur={() => form.trigger("warranty_end")}
                       aria-describedby="warranty_end-description"
                     />
@@ -601,7 +546,7 @@ export function EquipmentForm() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">
+          <div className="space-y-4">
             <FormField
               control={form.control}
               name="observations"
@@ -633,7 +578,81 @@ export function EquipmentForm() {
                 </FormItem>
               )}
             />
-            <div>
+          
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold">Imagens do Equipamento</h2>
+            <div
+              className={cn(
+                "border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center",
+                isDragging ? "border-blue-500 bg-blue-50 dark:bg-blue-900" : "border-gray-300 bg-gray-50 dark:bg-gray-700"
+              )}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <Upload className="h-8 w-8 text-gray-500 dark:text-gray-200 mb-2" />
+              <p className="text-gray-600 dark:text-gray-200 text-center">Arraste e solte imagens aqui ou clique para selecionar</p>
+              <div className="flex flex-col-reverse md:flex-row gap-2 mt-4">
+                <Button variant="outline" asChild>
+                  <label htmlFor="file-upload" className="cursor-pointer">
+                    <Upload className="h-4 w-4 mr-2" />
+                    Selecionar Arquivos
+                  </label>
+                </Button>
+                <Button variant="outline" asChild>
+                  <label htmlFor="camera-upload" className="cursor-pointer">
+                    <Camera className="h-4 w-4 mr-2" />
+                    Tirar Foto
+                  </label>
+                </Button>
+              </div>
+              <input
+                id="file-upload"
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleFileInput}
+              />
+              <input
+                id="camera-upload"
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                onChange={handleFileInput}
+              />
+            </div>
+            {files.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {files.map((file, index) => (
+                  <div key={index} className="relative bg-white dark:bg-gray-950 p-2 rounded-lg shadow">
+                    <Image
+                      src={URL.createObjectURL(file)}
+                      alt={file.name}
+                      width={300}
+                      height={128}
+                      className="w-full h-32 object-cover rounded"
+                    />
+                    <p className="text-sm text-gray-600 truncate mt-1">{file.name}</p>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-1 right-1"
+                      onClick={() => removeFile(index)}
+                    >
+                      X
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-4">
+             
               <FormField
                 control={form.control}
                 name="extra_fields"
@@ -710,77 +729,7 @@ export function EquipmentForm() {
                   </FormItem>
                 )}
               />
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Imagens do Equipamento</h2>
-            <div
-              className={cn(
-                "border-2 border-dashed rounded-lg p-6 flex flex-col items-center justify-center",
-                isDragging ? "border-blue-500 bg-blue-50 dark:bg-blue-900" : "border-gray-300 bg-gray-50 dark:bg-gray-700"
-              )}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <Upload className="h-8 w-8 text-gray-500 dark:text-gray-200 mb-2" />
-              <p className="text-gray-600 dark:text-gray-200 text-center">Arraste e solte imagens aqui ou clique para selecionar</p>
-              <div className="flex flex-col-reverse md:flex-row gap-2 mt-4">
-                <Button variant="outline" asChild>
-                  <label htmlFor="file-upload" className="cursor-pointer">
-                    <Upload className="h-4 w-4 mr-2" />
-                    Selecionar Arquivos
-                  </label>
-                </Button>
-                <Button variant="outline" asChild>
-                  <label htmlFor="camera-upload" className="cursor-pointer">
-                    <Camera className="h-4 w-4 mr-2" />
-                    Tirar Foto
-                  </label>
-                </Button>
-              </div>
-              <input
-                id="file-upload"
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleFileInput}
-              />
-              <input
-                id="camera-upload"
-                type="file"
-                accept="image/*"
-                capture="environment"
-                className="hidden"
-                onChange={handleFileInput}
-              />
-            </div>
-            {files.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {files.map((file, index) => (
-                  <div key={index} className="relative bg-white dark:bg-gray-950 p-2 rounded-lg shadow">
-                    <Image
-                      src={URL.createObjectURL(file)}
-                      alt={file.name}
-                      width={300}
-                      height={128}
-                      className="w-full h-32 object-cover rounded"
-                    />
-                    <p className="text-sm text-gray-600 truncate mt-1">{file.name}</p>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-1 right-1"
-                      onClick={() => removeFile(index)}
-                    >
-                      X
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
+          
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-4">

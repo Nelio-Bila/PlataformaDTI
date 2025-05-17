@@ -1,49 +1,16 @@
-// import { User } from "@prisma/client";
-
-// // Type for equipment data
-// export interface Equipment {
-//     id: string;
-//     serial_number: string | null;
-//     type: string;
-//     brand: string;
-//     model: string;
-//     purchase_date: string | null; // ISO string or Date
-//     warranty_end: string | null;  // ISO string or Date
-//     status: string;
-//     direction_id: string | null;
-//     department_id: string | null;
-//     sector_id: string | null;
-//     service_id: string | null;
-//     repartition_id: string | null;
-//     created_at: string; // ISO string or Date
-//     updated_at: string; // ISO string or Date
-//     images: EquipmentImage[];
-//     registeredBy: User;
-//     direction?: { name: string; id: string; created_at: Date; updated_at: Date } | null;
-//     department?: { name: string; id: string; created_at: Date; updated_at: Date; direction_id: string } | null;
-//     sector?: { name: string; id: string; created_at: Date; updated_at: Date; department_id: string } | null;
-//     service?: { name: string; id: string; created_at: Date; updated_at: Date; department_id: string | null } | null;
-//     repartition?: { name: string; id: string; created_at: Date; updated_at: Date; department_id: string } | null;
-// }
-
 // src/types/equipment.ts
+import { equipment_schema } from "@/schemas/equipment";
 import { Department, Direction, Repartition, Sector, Service, User } from "@prisma/client";
-export interface EquipmentImage {
+import { z } from "zod";
+
+export type EquipmentImage = {
   id: string;
-  equipment_id: string;
   url: string;
+  cloudinary_public_id: string;
+  equipment_id: string;
   description?: string | null;
   created_at: string;
-}
-
-//   export interface FilterOptions {
-//     types: string[];
-//     statuses: string[];
-//     directions: { id: string; name: string }[];
-//     departments: { id: string; name: string; direction_id: string }[];
-//   }
-
-
+};
 
 export type Equipment = {
   id: string;
@@ -67,8 +34,8 @@ export type Equipment = {
   registeredBy?: User | null;
   created_at: string;
   updated_at: string;
-  purchase_date?:  string;
-  warranty_end?:   string;
+  purchase_date?: string;
+  warranty_end?: string;
 };
 
 export type FilterOptions = {
@@ -84,3 +51,38 @@ export type FiltersState = {
   direction_id: string[];
   department_id: string[];
 };
+
+export const typeOptions = [
+  { value: "MOUSE", label: "Mouse" },
+  { value: "KEYBOARD", label: "Teclado" },
+  { value: "LAPTOP", label: "Laptop" },
+  { value: "PRINTER", label: "Impressora" },
+  { value: "SWITCH", label: "Switch" },
+  { value: "MONITOR", label: "Monitor" },
+  { value: "PC", label: "Computador (PC)" },
+  { value: "PROJECTOR", label: "Projetor (Data Show)" },
+  { value: "SPEAKERS", label: "Caixas de Som" },
+  { value: "CAMERA", label: "Câmera" },
+  { value: "ROUTER", label: "Roteador" },
+  { value: "UPS", label: "Nobreak (UPS)" },
+  { value: "OTHER", label: "Outro" },
+] as const;
+
+export const statusOptions = [
+  { value: "ACTIVO", label: "Activo" },
+  { value: "MANUTENÇÃO", label: "Manutenção" },
+  { value: "INACTIVO", label: "Inactivo" },
+] as const;
+
+
+export type EquipmentFormData = z.infer<typeof equipment_schema>;
+
+export interface EquipmentUpdateFormProps {
+  equipmentId: string;
+}
+
+
+export interface KeyValuePair {
+  key: string;
+  value: string;
+}
