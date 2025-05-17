@@ -932,10 +932,12 @@
 
 
 
+
+
 // src/components/tables/equipment-tables/client.tsx
 "use client";
 
-import UserGroupGuard from "@/components/auth/user-group-guard"; // Import the guard
+import UserGroupGuard from "@/components/auth/user-group-guard";
 import TableFilter from "@/components/datatable/table-filter";
 import TableSortHeader from "@/components/datatable/table-sort-header";
 import EquipmentClientSkeleton from "@/components/skeletons/equipment-client-skeleton";
@@ -1052,6 +1054,7 @@ export function EquipmentClient() {
     status: true,
     direction: true,
     department: true,
+    registered_by: false, // Default to hidden, shown for admins
     created_at: true,
     actions: true,
   });
@@ -1059,6 +1062,14 @@ export function EquipmentClient() {
   // Check permissions and group membership
   const userGroups = session?.user?.groups || [];
   const hasEquipmentReadPermission = userGroups.some(group => group.permissions.includes("equipment:read"));
+  const isAdmin = userGroups.some(group => group.name === "Admins");
+
+  // Show registered_by column for admins
+  useEffect(() => {
+    if (isAdmin) {
+      setColumnVisibility(prev => ({ ...prev, registered_by: true }));
+    }
+  }, [isAdmin]);
 
   // Fetch equipment data
   const { data: equipmentData, isLoading: isEquipmentLoading, error: equipmentError, refetch } = useQuery({
@@ -1288,6 +1299,27 @@ export function EquipmentClient() {
           meta: { title: "Departamento" } as ColumnMeta,
         },
         {
+          accessorFn: (row) => row.registeredBy?.name,
+          id: "registered_by",
+          header: () => (
+            <TableSortHeader
+              title="Registrado Por"
+              sort={sorting[0]?.id === "registered_by" ? (sorting[0]?.desc ? "desc" : "asc") : null}
+              onClick={() => {
+                setSorting([
+                  {
+                    id: "registered_by",
+                    desc: sorting[0]?.id === "registered_by" && !sorting[0]?.desc ? true : false,
+                  },
+                ]);
+                refetch();
+              }}
+            />
+          ),
+          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("registered_by") || "N/D",
+          meta: { title: "Registrado Por" } as ColumnMeta,
+        },
+        {
           accessorFn: (row) => row.created_at,
           id: "created_at",
           header: () => (
@@ -1324,16 +1356,17 @@ export function EquipmentClient() {
                   <Eye />
                   <Link href={`/equipments/${row.original.id}`}>Ver Detalhes</Link>
                 </DropdownMenuItem>
-
-                {(userGroups.some(group => group.name === "Admins") ||
+                {/* Edit: Admins or user who registered */}
+                {(userGroups.some(group => group.name === "Admins") || 
                   session?.user?.id === row.original.registeredBy?.id) && (
-                    <DropdownMenuItem>
-                      <Link href={`/equipments/update/${row.original.id}`} className="flex flex-nowrap gap-2">
-                        <Edit />
-                        <span>Editar</span>
-                      </Link>
-                    </DropdownMenuItem>
-                  )}
+                  <DropdownMenuItem>
+                    <Link href={`/equipments/update/${row.original.id}`} className="flex flex-nowrap gap-2">
+                      <Edit />
+                      <span>Editar</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                {/* Delete: Admins only */}
                 <UserGroupGuard allowedGroups={["Admins"]}>
                   <DropdownMenuItem
                     onClick={() => {
@@ -1355,7 +1388,7 @@ export function EquipmentClient() {
 
       return baseColumns;
     },
-    [refetch, sorting]
+    [refetch, sorting, session?.user?.id, userGroups]
   );
 
   const equipmentTypeOptions: FilterOption[] = (filterOptions?.types || []).map((type) => ({
@@ -1477,6 +1510,7 @@ export function EquipmentClient() {
       if (columnVisibility["status"]) rowData["Status"] = row.original.status;
       if (columnVisibility["direction"]) rowData["Direção"] = row.original.direction?.name || "N/D";
       if (columnVisibility["department"]) rowData["Departamento"] = row.original.department?.name || "N/D";
+      if (columnVisibility["registered_by"] && isAdmin) rowData["Registrado Por"] = row.original.registeredBy?.name || "N/D";
       if (columnVisibility["created_at"])
         rowData["Criado Em"] = new Date(row.original.created_at).toLocaleDateString("pt-BR");
       return rowData;
@@ -1486,7 +1520,7 @@ export function EquipmentClient() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Equipamentos");
     XLSX.writeFile(workbook, `exportacao_equipamentos_${new Date().toISOString().slice(0, 10)}.xlsx`);
-  }, [table, columnVisibility]);
+  }, [table, columnVisibility, isAdmin]);
 
   if (status === "loading" || isEquipmentLoading || isFilterLoading) {
     return <EquipmentClientSkeleton />;
@@ -1546,13 +1580,15 @@ export function EquipmentClient() {
             <RefreshCw className="h-4 w-4" />
           </Button>
           {Object.keys(rowSelection).length > 0 && (
-            <Button
-              onClick={() => setDeleteDialogOpen(true)}
-              variant="destructive"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Excluir Selecionados
-            </Button>
+            <UserGroupGuard allowedGroups={["Admins"]}>
+              <Button
+                onClick={() => setDeleteDialogOpen(true)}
+                variant="destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir Selecionados
+              </Button>
+            </UserGroupGuard>
           )}
         </div>
       </div>
@@ -1617,7 +1653,7 @@ export function EquipmentClient() {
             setPageIndex(0);
             refetch();
           }}
-          setTimeDebounce={() => { }}
+          setTimeDebounce={() => {}}
         />
         <TableFilter
           title="Status"
@@ -1636,7 +1672,7 @@ export function EquipmentClient() {
             setPageIndex(0);
             refetch();
           }}
-          setTimeDebounce={() => { }}
+          setTimeDebounce={() => {}}
         />
         <TableFilter
           title="Direção"
@@ -1659,7 +1695,7 @@ export function EquipmentClient() {
             setPageIndex(0);
             refetch();
           }}
-          setTimeDebounce={() => { }}
+          setTimeDebounce={() => {}}
         />
         <TableFilter
           title="Departamento"
@@ -1678,7 +1714,7 @@ export function EquipmentClient() {
             setPageIndex(0);
             refetch();
           }}
-          setTimeDebounce={() => { }}
+          setTimeDebounce={() => {}}
         />
         <UserGroupGuard allowedGroups={["Admins"]}>
           <TableFilter
@@ -1698,7 +1734,7 @@ export function EquipmentClient() {
               setPageIndex(0);
               refetch();
             }}
-            setTimeDebounce={() => { }}
+            setTimeDebounce={() => {}}
           />
         </UserGroupGuard>
         <Button

@@ -8,6 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
+import UserGroupGuard from "@/components/auth/user-group-guard";
 
 export default function NewResource() {
   return (
@@ -36,12 +37,14 @@ export default function NewResource() {
             </Link>
           </DropdownMenuItem>
 
+          <UserGroupGuard allowedGroups={["Admins"]}>
           <DropdownMenuItem asChild>
             <Link href="/users/add" className="flex flex-row">
               <Icons.user className="mr-2 h-4 w-4" />
               <span>Utilizador</span>
             </Link>
           </DropdownMenuItem>
+          </UserGroupGuard>
 
         </DropdownMenuGroup>
       </DropdownMenuContent>
