@@ -83,6 +83,22 @@ const equipment_schema = z.object({
     sector_id: z.string().optional(),
     service_id: z.string().optional(),
     repartition_id: z.string().optional(),
+    observations: z.string().optional(),
+      extra_fields: z
+        .string()
+        .optional()
+        .refine(
+          (val) => {
+            if (!val) return true;
+            try {
+              JSON.parse(val);
+              return true;
+            } catch {
+              return false;
+            }
+          },
+          { message: "Deve ser um JSON válido" }
+        ),
 });
 
 export type EquipmentFormData = z.infer<typeof equipment_schema>;

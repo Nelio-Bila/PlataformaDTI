@@ -214,7 +214,7 @@ export function EquipmentForm() {
       }
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["equipment"] });
       form.reset();
       setFiles([]);
@@ -637,7 +637,7 @@ export function EquipmentForm() {
               <FormField
                 control={form.control}
                 name="extra_fields"
-                render={({ field }) => (
+                render={() => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-1">
                       <Tag className="h-4 w-4" />
