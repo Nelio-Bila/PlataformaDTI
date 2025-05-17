@@ -107,6 +107,109 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 
 ## Contributing
+We welcome contributions to the Hospital IT Asset Tracker! This section provides guidelines to help you contribute effectively.
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-```
+#### Getting Started
+1. the repository
+
+ - Click the "Fork" button at the top right of the repository page on GitHub
+ - This creates a copy of the repository in your GitHub account
+2. Clone your fork locally
+
+3. Set up development environment
+    ```bash
+    # Install dependencies
+    pnpm install
+
+    # Create .env file from example
+    cp example.env .env
+
+    # Configure your database connection in .env
+
+    # Initialize database
+    pnpm dlx prisma migrate dev
+    pnpm dlx prisma db seed
+    ```
+
+#### Development Workflow
+1. Create a feature branch
+    ```bash
+    git checkout -b feature/your-feature-name
+    # or
+    git checkout -b fix/issue-you-are-fixing
+    ```
+
+2. Make your changes
+    - Write clean, well-commented code
+    - Follow existing code style and project structure
+    - Update or add tests for your changes
+
+3. Test your changes locally
+    ```bash
+    # Run linting
+    pnpm lint
+
+    # Start development server
+    pnpm dev
+    ```
+
+4. Commit your changes
+    ```bash
+    git add .
+    git commit -m "Description of changes"
+    ```
+
+Follow these guidelines for commit messages:
+
+ - Use present tense ("Add feature" not "Added feature")
+ - First line should be a clear summary
+ - Reference issue numbers if applicable: "Fix #123: Add user profile page"
+
+#### Pull Request Process
+1. Push changes to your fork
+    ```bash
+    git push origin feature/your-feature-name
+    ```
+
+2. Create a pull request
+
+    - Go to the original repository on GitHub
+    - Click "New pull request"
+    - Select your fork and branch
+    - Fill in the PR template with details about your changes
+
+3. Code review process
+
+    - Maintainers will review your code
+    - Address any feedback or requested changes
+    - Once approved, your PR will be merged
+
+
+#### Reporting Issues
+1. Check existing issues to avoid duplicates
+    - Create a new issue with:
+    - Clear, descriptive title
+    - Detailed reproduction steps for bugs
+    - Expected behavior and actual behavior
+    - Screenshots if applicable
+    - Environment information (browser, OS, etc.)
+
+
+#### Code Style Guidelines
+    - Follow the project's ESLint and Prettier configurations
+    - Use TypeScript types appropriately
+    - Keep components modular and reusable
+    - Comment complex logic
+    - Follow the existing project structure
+
+#### Documentation
+    - Update the README.md for any user-facing changes
+    - Add JSDoc comments for new functions and components
+    - Update API documentation for any endpoint changes
+
+#### Database Changes
+    - For schema changes, create appropriate Prisma migrations
+    - Test migrations both up and down to ensure they work correctly
+    - Update relevant seed data if necessary
+
+Thank you for contributing to making PlataformaDTI better!
