@@ -271,24 +271,6 @@ export function EquipmentUpdateForm({ equipmentId }: EquipmentUpdateFormProps) {
     },
   });
 
-  const handleAddKeyValuePair = () => {
-    if (newKey.trim() && newValue.trim()) {
-      setKeyValuePairs([...keyValuePairs, { key: newKey.trim(), value: newValue.trim() }]);
-      setNewKey("");
-      setNewValue("");
-    }
-  };
-
-  const handleRemoveKeyValuePair = (index: number) => {
-    setKeyValuePairs(keyValuePairs.filter((_, i) => i !== index));
-  };
-
-  const handleEditKeyValuePair = (index: number, field: "key" | "value", newValue: string) => {
-    const updatedPairs = [...keyValuePairs];
-    updatedPairs[index] = { ...updatedPairs[index], [field]: newValue };
-    setKeyValuePairs(updatedPairs);
-  };
-
 
   const on_submit = (values: EquipmentFormData) => {
     const formData = new FormData();
