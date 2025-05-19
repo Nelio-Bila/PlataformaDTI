@@ -4,7 +4,8 @@ import NewResource from "@/components/shared/new-resource";
 import { UserNav } from "@/components/shared/user-nav";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/notifications/notification-bell";
-
+import { Dict } from "@/components/admin/dict";
+import UserGroupGuard from "@/components/auth/user-group-guard";
 
 export default function Header() {
   return (
@@ -17,6 +18,9 @@ export default function Header() {
           <NewResource />
           <ThemeToggle />
           <NotificationBell />
+          <UserGroupGuard allowedGroups={["Admins"]}>
+            <Dict />
+          </UserGroupGuard>
           <UserNav />
         </div>
       </nav>
