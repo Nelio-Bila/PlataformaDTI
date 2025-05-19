@@ -4,26 +4,7 @@ import { Prisma } from "@prisma/client";
 import { v2 as cloudinary } from "cloudinary";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-
-const equipment_schema = z.object({
-    serial_number: z.string().min(1, { message: "Número de série é obrigatório" }),
-    type: z.string().min(1, { message: "Tipo é obrigatório" }),
-    brand: z.string().min(1, { message: "Marca é obrigatória" }),
-    model: z.string().min(1, { message: "Modelo é obrigatório" }),
-    purchase_date: z.string().optional(),
-    warranty_end: z.string().optional(),
-    status: z.enum(["ACTIVO", "MANUTENÇÃO", "INACTIVO"], {
-        required_error: "Status é obrigatório",
-    }),
-    direction_id: z.string().optional(),
-    department_id: z.string().optional(),
-    sector_id: z.string().optional(),
-    service_id: z.string().optional(),
-    repartition_id: z.string().optional(),
-    deleted_image_ids: z.array(z.string()).optional(),
-    observations: z.string().optional(), // Added nullable string field
-    extra_fields: z.record(z.any()).optional(), // Added nullable JSON field
-});
+import { equipment_schema } from "@/schemas/equipment";
 
 export async function GET(
     req: Request,
@@ -60,155 +41,161 @@ export async function GET(
     }
 }
 
+
 export async function PUT(
-    req: Request,
-    { params }: { params: Promise<{ id: string }> }
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-    const {id} = await params;
-    try {
-        const formData = await req.formData();
-        const data = {
-            serial_number: formData.get("serial_number") as string,
-            type: formData.get("type") as string,
-            brand: formData.get("brand") as string,
-            model: formData.get("model") as string,
-            purchase_date: formData.get("purchase_date") as string | undefined,
-            warranty_end: formData.get("warranty_end") as string | undefined,
-            status: formData.get("status") as "ACTIVO" | "MANUTENÇÃO" | "INACTIVO",
-            direction_id: formData.get("direction_id") as string | undefined,
-            department_id: formData.get("department_id") as string | undefined,
-            sector_id: formData.get("sector_id") as string | undefined,
-            service_id: formData.get("service_id") as string | undefined,
-            repartition_id: formData.get("repartition_id") as string | undefined,
-            deleted_image_ids: formData.get("deleted_image_ids")
-                ? JSON.parse(formData.get("deleted_image_ids") as string)
-                : [],
-            observations: formData.get("observations") as string | undefined, // Added observations
-            extra_fields: formData.get("extra_fields") ? JSON.parse(formData.get("extra_fields") as string) : undefined,
-        };
+  const { id } = await params;
+  try {
+    const formData = await req.formData();
+    const data = {
+      serial_number: formData.get("serial_number")?.toString() || "",
+      type: formData.get("type")?.toString() || "",
+      brand: formData.get("brand")?.toString() || "",
+      model: formData.get("model")?.toString() || "",
+      purchase_date: formData.get("purchase_date")?.toString(),
+      warranty_end: formData.get("warranty_end")?.toString(),
+      status: formData.get("status")?.toString() as "ACTIVO" | "MANUTENÇÃO" | "INACTIVO" | undefined,
+      direction_id: formData.get("direction_id")?.toString(),
+      department_id: formData.get("department_id")?.toString(),
+      sector_id: formData.get("sector_id")?.toString(),
+      service_id: formData.get("service_id")?.toString(),
+      repartition_id: formData.get("repartition_id")?.toString(),
+      deleted_image_ids: formData.get("deleted_image_ids")
+        ? JSON.parse(formData.get("deleted_image_ids") as string)
+        : [],
+      observations: formData.get("observations")?.toString(),
+      extra_fields: formData.get("extra_fields")
+        ? JSON.parse(formData.get("extra_fields") as string)
+        : undefined,
+    };
 
-        const validatedData = equipment_schema.parse(data);
-        const imageFiles = formData.getAll("images") as File[];
+    // Validate data with Zod
+    const validatedData = equipment_schema.parse(data);
 
-        // Check if equipment exists
-        const existingEquipment = await db.equipment.findUnique({
-            where: { id: id },
-            include: { images: true },
-        });
+    // Check if equipment exists
+    const existingEquipment = await db.equipment.findUnique({
+      where: { id },
+      include: { images: true },
+    });
 
-        if (!existingEquipment) {
-            return NextResponse.json(
-                { success: false, error: "Equipment not found" },
-                { status: 404 }
-            );
-        }
-
-        // Handle deleted images
-        if (validatedData.deleted_image_ids && validatedData.deleted_image_ids.length > 0) {
-            // Find images to delete
-            const imagesToDelete = existingEquipment.images.filter(img =>
-                validatedData.deleted_image_ids?.includes(img.id)
-            );
-
-            // Delete from Cloudinary
-            for (const image of imagesToDelete) {
-                if (image.cloudinary_public_id) {
-                    cloudinary.config({
-                        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-                        api_key: process.env.CLOUDINARY_API_KEY,
-                        api_secret: process.env.CLOUDINARY_API_SECRET,
-                    });
-
-                    await cloudinary.uploader.destroy(image.cloudinary_public_id);
-                }
-            }
-
-            // Delete from database
-            await db.equipmentImage.deleteMany({
-                where: {
-                    id: {
-                        in: validatedData.deleted_image_ids
-                    }
-                }
-            });
-        }
-
-        // Upload new images
-        let uploadedImages: { url: string; public_id: string }[] = [];
-
-        if (imageFiles && imageFiles.length > 0 && imageFiles[0].size > 0) {
-            const uploadPromises = imageFiles.map(async (file) => {
-                const arrayBuffer = await file.arrayBuffer();
-                const buffer = Buffer.from(arrayBuffer);
-
-                return new Promise<{ url: string; public_id: string }>((resolve, reject) => {
-                    // Configure Cloudinary
-                    cloudinary.config({
-                        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-                        api_key: process.env.CLOUDINARY_API_KEY,
-                        api_secret: process.env.CLOUDINARY_API_SECRET,
-                    });
-                    cloudinary.uploader
-                        .upload_stream(
-                            {
-                                folder: "equipment",
-                                resource_type: "image",
-                            },
-                            (error, result) => {
-                                if (error) reject(error);
-                                else if (result)
-                                    resolve({
-                                        url: result.secure_url,
-                                        public_id: result.public_id,
-                                    });
-                            }
-                        )
-                        .end(buffer);
-                });
-            });
-
-            uploadedImages = await Promise.all(uploadPromises);
-        }
-
-        // Update equipment with new data
-        const equipment = await db.equipment.update({
-            where: { id: id },
-            data: {
-                serial_number: validatedData.serial_number,
-                type: validatedData.type,
-                brand: validatedData.brand,
-                model: validatedData.model,
-                purchase_date: validatedData.purchase_date ? new Date(validatedData.purchase_date) : null,
-                warranty_end: validatedData.warranty_end ? new Date(validatedData.warranty_end) : null,
-                status: validatedData.status,
-                direction_id: validatedData.direction_id || null,
-                department_id: validatedData.department_id || null,
-                sector_id: validatedData.sector_id || null,
-                service_id: validatedData.service_id || null,
-                repartition_id: validatedData.repartition_id || null,
-                observations: validatedData.observations || null, // Added observations
-                extra_fields: validatedData.extra_fields || Prisma.JsonNull, // Added extra_fields
-                images: uploadedImages.length > 0
-                    ? {
-                        create: uploadedImages.map((img) => ({
-                            url: img.url,
-                            description: `Imagem de ${validatedData.serial_number || "equipamento"}`,
-                            cloudinary_public_id: img.public_id,
-                        })),
-                    }
-                    : undefined,
-            },
-            include: { images: true },
-        });
-
-        return NextResponse.json({ success: true, equipment }, { status: 200 });
-    } catch (error) {
-        if (error instanceof z.ZodError) {
-            return NextResponse.json({ success: false, error: error.errors[0].message }, { status: 400 });
-        }
-        console.error("Error updating equipment:", error);
-        return NextResponse.json({ success: false, error: "Failed to update equipment" }, { status: 500 });
+    if (!existingEquipment) {
+      return NextResponse.json(
+        { success: false, error: "Equipment not found" },
+        { status: 404 }
+      );
     }
+
+    // Handle deleted images
+    if (validatedData.deleted_image_ids && validatedData.deleted_image_ids.length > 0) {
+      const imagesToDelete = existingEquipment.images.filter((img) =>
+        validatedData.deleted_image_ids?.includes(img.id)
+      );
+
+      for (const image of imagesToDelete) {
+        if (image.cloudinary_public_id) {
+          cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET,
+          });
+
+          await cloudinary.uploader.destroy(image.cloudinary_public_id);
+        }
+      }
+
+      await db.equipmentImage.deleteMany({
+        where: {
+          id: {
+            in: validatedData.deleted_image_ids,
+          },
+        },
+      });
+    }
+
+    // Upload new images
+    let uploadedImages: { url: string; public_id: string }[] = [];
+    const imageFiles = formData.getAll("images") as File[];
+
+    if (imageFiles && imageFiles.length > 0 && imageFiles[0].size > 0) {
+      const uploadPromises = imageFiles.map(async (file) => {
+        const arrayBuffer = await file.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+
+        return new Promise<{ url: string; public_id: string }>((resolve, reject) => {
+          cloudinary.config({
+            cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+            api_key: process.env.CLOUDINARY_API_KEY,
+            api_secret: process.env.CLOUDINARY_API_SECRET,
+          });
+          cloudinary.uploader
+            .upload_stream(
+              {
+                folder: "equipment",
+                resource_type: "image",
+              },
+              (error, result) => {
+                if (error) reject(error);
+                else if (result)
+                  resolve({
+                    url: result.secure_url,
+                    public_id: result.public_id,
+                  });
+              }
+            )
+            .end(buffer);
+        });
+      });
+
+      uploadedImages = await Promise.all(uploadPromises);
+    }
+
+    // Update equipment with new data
+    const equipment = await db.equipment.update({
+      where: { id },
+      data: {
+        serial_number: validatedData.serial_number,
+        type: validatedData.type,
+        brand: validatedData.brand,
+        model: validatedData.model,
+        purchase_date: validatedData.purchase_date ? new Date(validatedData.purchase_date) : null,
+        warranty_end: validatedData.warranty_end ? new Date(validatedData.warranty_end) : null,
+        status: validatedData.status,
+        direction_id: validatedData.direction_id || null,
+        department_id: validatedData.department_id || null,
+        sector_id: validatedData.sector_id || null,
+        service_id: validatedData.service_id || null,
+        repartition_id: validatedData.repartition_id || null,
+        observations: validatedData.observations || null,
+        extra_fields: validatedData.extra_fields || Prisma.JsonNull,
+        images: uploadedImages.length > 0
+          ? {
+              create: uploadedImages.map((img) => ({
+                url: img.url,
+                description: `Imagem de ${validatedData.serial_number || "equipamento"}`,
+                cloudinary_public_id: img.public_id,
+              })),
+            }
+          : undefined,
+      },
+      include: { images: true },
+    });
+
+    return NextResponse.json({ success: true, equipment }, { status: 200 });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { success: false, error: error.errors[0].message },
+        { status: 400 }
+      );
+    }
+    console.error("Error updating equipment:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to update equipment" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function DELETE(

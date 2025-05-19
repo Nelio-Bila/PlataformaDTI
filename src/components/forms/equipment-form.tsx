@@ -96,7 +96,7 @@ export function EquipmentForm() {
       service_id: "",
       repartition_id: "",
       observations: "",
-      extra_fields: "",
+      extra_fields: {},
     },
   });
 
@@ -264,8 +264,6 @@ export function EquipmentForm() {
     });
   };
 
-  // Rest of the component remains unchanged (UI rendering, form fields, etc.)
-  // ... [Previous rendering code for form fields, images, etc., remains the same]
   return (
     <TooltipProvider>
       <Form {...form}>

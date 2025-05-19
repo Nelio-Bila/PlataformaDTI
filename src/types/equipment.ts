@@ -36,6 +36,8 @@ export type Equipment = {
   updated_at: string;
   purchase_date?: string;
   warranty_end?: string;
+  observations?: string; 
+  extra_fields?: Record<string, string>;
 };
 
 export type FilterOptions = {
