@@ -90,6 +90,30 @@ The database is structured around these main entities:
  - **Users & Permissions**: Role-based access control system
  - **Requests**: Asset requisition and movement tracking
 
+## Database Management
+
+The application includes built-in functionality for database backup and restoration:
+
+### Backing Up the Database
+
+1. Navigate to Admin > Database Management
+2. Click "Download Backup" to create and download a database dump file
+3. Store this file securely for disaster recovery
+
+### Restoring the Database
+
+1. Navigate to Admin > Database Management
+2. Select a backup file (.dump extension) using the file input
+3. Click "Restore Database" and confirm the action
+4. Wait for the restoration process to complete
+
+> **Warning**: Database restoration will overwrite all current data. Make sure to create a backup before restoring.
+
+### Requirements
+
+- PostgreSQL client tools must be installed on the server
+- The server running the application must have permissions to execute pg_dump and pg_restore
+
 ### Deployment
 The application can be deployed on Vercel or any platform supporting Next.js applications:
     ```bash
