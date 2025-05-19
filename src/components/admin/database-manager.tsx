@@ -56,7 +56,7 @@ export function DatabaseManager() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Failed to create backup");
+        throw new Error(error.message || "Falha ao criar backup");
       }
 
       const blob = await response.blob();
@@ -74,15 +74,15 @@ export function DatabaseManager() {
       document.body.removeChild(a);
 
       toast({
-        title: "Backup Created",
-        description: "Your database backup was created successfully.",
+        title: "Backup Criado",
+        description: "O backup da sua base de dados foi criado com sucesso.",
         variant: "success",
       });
     } catch (error) {
       console.error("Backup error:", error);
       toast({
-        title: "Backup Failed",
-        description: error instanceof Error ? error.message : "Failed to create database backup",
+        title: "Falha no Backup",
+        description: error instanceof Error ? error.message : "Falha ao criar backup da base de dados",
         variant: "destructive",
       });
     } finally {
@@ -93,8 +93,8 @@ export function DatabaseManager() {
   const handleRestore = async () => {
     if (!backupFile) {
       toast({
-        title: "No File Selected",
-        description: "Please select a backup file to restore.",
+        title: "Nenhum Ficheiro Seleccionado",
+        description: "Por favor, seleccione um ficheiro de backup para restaurar.",
         variant: "destructive",
       });
       return;
@@ -112,12 +112,12 @@ export function DatabaseManager() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Failed to restore database");
+        throw new Error(error.message || "Falha ao restaurar a base de dados");
       }
 
       toast({
-        title: "Database Restored",
-        description: "Your database has been successfully restored.",
+        title: "Base de Dados Restaurada",
+        description: "A sua base de dados foi restaurada com sucesso.",
         variant: "success",
       });
       
@@ -129,8 +129,8 @@ export function DatabaseManager() {
     } catch (error) {
       console.error("Restore error:", error);
       toast({
-        title: "Restore Failed",
-        description: error instanceof Error ? error.message : "Failed to restore database",
+        title: "Falha na Restauração",
+        description: error instanceof Error ? error.message : "Falha ao restaurar a base de dados",
         variant: "destructive",
       });
     } finally {
@@ -141,31 +141,31 @@ export function DatabaseManager() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Database Management</CardTitle>
+        <CardTitle>Gestão de Base de Dados</CardTitle>
         <CardDescription>
-          Create backups of your database or restore from existing backups.
+          Crie cópias de segurança da base de dados ou restaure a partir de backups existentes.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {pgDumpAvailable === false && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>PostgreSQL Tools Not Found</AlertTitle>
+            <AlertTitle>Ferramentas PostgreSQL Não Encontradas</AlertTitle>
             <AlertDescription>
-              <p>To enable full database backup and restore functionality, you need to install PostgreSQL command-line tools.</p>
-              <h4 className="font-semibold mt-2">Installation Instructions:</h4>
+              <p>Para activar a funcionalidade completa de backup e restauro da base de dados, precisa instalar as ferramentas de linha de comando PostgreSQL.</p>
+              <h4 className="font-semibold mt-2">Instruções de Instalação:</h4>
               <ul className="list-disc pl-5 mt-1 space-y-1">
-                <li>Download and install PostgreSQL from <a href="https://www.postgresql.org/download/" target="_blank" rel="noopener noreferrer" className="underline">postgresql.org</a></li>
-                <li>Make sure to select "Command Line Tools" during installation</li>
-                <li>After installation, restart your application</li>
+                <li>Descarregue e instale o PostgreSQL a partir de <a href="https://www.postgresql.org/download/" target="_blank" rel="noopener noreferrer" className="underline">postgresql.org</a></li>
+                <li>Certifique-se de seleccionar "Ferramentas de Linha de Comando" durante a instalação</li>
+                <li>Após a instalação, reinicie a aplicação</li>
               </ul>
             </AlertDescription>
           </Alert>
         )}
         <div className="space-y-2">
-          <h3 className="text-lg font-medium">Database Backup</h3>
+          <h3 className="text-lg font-medium">Cópia de Segurança</h3>
           <p className="text-sm text-muted-foreground">
-            Create a backup file of your current database state.
+            Crie um ficheiro de backup do estado actual da base de dados.
           </p>
           <Button 
             onClick={handleBackup}
@@ -175,21 +175,21 @@ export function DatabaseManager() {
             {isBackingUp ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating Backup...
+                A criar backup...
               </>
             ) : (
               <>
                 <Download className="mr-2 h-4 w-4" />
-                Download Backup
+                Descarregar Backup
               </>
             )}
           </Button>
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-lg font-medium">Database Restore</h3>
+          <h3 className="text-lg font-medium">Restaurar Base de Dados</h3>
           <p className="text-sm text-muted-foreground">
-            Restore your database from a backup file. This will overwrite current data.
+            Restaure a base de dados a partir de um ficheiro de backup. Isto irá substituir os dados actuais.
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <Input
@@ -208,29 +208,29 @@ export function DatabaseManager() {
                   {isRestoring ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Restoring...
+                      A restaurar...
                     </>
                   ) : (
                     <>
                       <Upload className="mr-2 h-4 w-4" />
-                      Restore Database
+                      Restaurar Base de Dados
                     </>
                   )}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogTitle>Tem a certeza absoluta?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This action will overwrite your current database with the backup file.
-                    All current data not included in the backup will be lost.
-                    This action cannot be undone.
+                    Esta acção irá substituir a sua base de dados actual pelo ficheiro de backup.
+                    Todos os dados actuais não incluídos no backup serão perdidos.
+                    Esta acção não pode ser desfeita.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
                   <AlertDialogAction onClick={handleRestore} className="bg-destructive text-destructive-foreground">
-                    Yes, Restore Database
+                    Sim, Restaurar Base de Dados
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -241,7 +241,7 @@ export function DatabaseManager() {
       <CardFooter className="bg-muted/50 p-4 text-sm text-muted-foreground">
         <div className="flex items-center">
           <AlertCircle className="h-4 w-4 mr-2" />
-          <span>Regular backups are recommended to prevent data loss.</span>
+          <span>Backups regulares são recomendados para prevenir a perda de dados.</span>
         </div>
       </CardFooter>
     </Card>
