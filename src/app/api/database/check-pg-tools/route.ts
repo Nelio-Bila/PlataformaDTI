@@ -9,7 +9,8 @@ export async function GET() {
     // Try to execute pg_dump --version to check if it's available
     await execAsync("pg_dump --version");
     return NextResponse.json({ available: true });
-  } catch (/* eslint-disable-next-line @typescript-eslint/no-unused-vars */e) {
+  } catch {
+    // Ignore the error and just return not available
     return NextResponse.json({ available: false });
   }
 }

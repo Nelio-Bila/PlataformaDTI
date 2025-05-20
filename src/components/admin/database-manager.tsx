@@ -39,7 +39,7 @@ export function DatabaseManager() {
         const response = await fetch("/api/database/check-pg-tools");
         const data = await response.json();
         setPgDumpAvailable(data.available);
-      } catch (/* eslint-disable-next-line @typescript-eslint/no-unused-vars */e) {
+      } catch {
         setPgDumpAvailable(false);
       }
     };
@@ -156,7 +156,7 @@ export function DatabaseManager() {
               <h4 className="font-semibold mt-2">Instruções de Instalação:</h4>
               <ul className="list-disc pl-5 mt-1 space-y-1">
                 <li>Descarregue e instale o PostgreSQL a partir de <a href="https://www.postgresql.org/download/" target="_blank" rel="noopener noreferrer" className="underline">postgresql.org</a></li>
-                <li>Certifique-se de seleccionar "Ferramentas de Linha de Comando" durante a instalação</li>
+                <li>Certifique-se de seleccionar &quot;Ferramentas de Linha de Comando&quot; durante a instalação</li>
                 <li>Após a instalação, reinicie a aplicação</li>
               </ul>
             </AlertDescription>
