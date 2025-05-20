@@ -4,7 +4,6 @@ import PageContainer from "@/components/layout/page-container";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { RepartitionTable } from "@/components/admin/dictionary/repartition-table";
-import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { RepartitionCreateButton } from "@/components/admin/dictionary/repartition-create-button";
 

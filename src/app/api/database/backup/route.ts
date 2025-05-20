@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { auth } from "@/auth";
@@ -9,7 +9,7 @@ import { db } from "@/lib/db"; // Import your Prisma client
 
 const execAsync = promisify(exec);
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   try {
     // Check authentication and admin permissions
     const session = await auth();
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       // If we get here, pg_dump is available, so use the original approach
       return await createPgDumpBackup(timestamp);
     } catch (pgDumpError) {
-      console.log("pg_dump not available, using Prisma-based backup");
+      console.log("pg_dump not available, using Prisma-based backup",pgDumpError);
       // pg_dump not available, use Prisma-based backup
       return await createPrismaBackup(timestamp);
     }
@@ -111,7 +111,7 @@ async function createPrismaBackup(timestamp: string) {
   // Fetch data for each model
   for (const model of models) {
     try {
-      // @ts-ignore - dynamically accessing Prisma models
+      // @ts-expect-error - dynamically accessing Prisma models
       data[model] = await db[model.toLowerCase()].findMany();
     } catch (error) {
       console.error(`Error fetching ${model} data:`, error);

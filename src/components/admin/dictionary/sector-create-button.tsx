@@ -32,7 +32,7 @@ interface SectorCreateButtonProps {
 export function SectorCreateButton({ departments, services }: SectorCreateButtonProps) {
   const [open, setOpen] = useState(false);
   
-  const handleSuccess = (newSector: any) => {
+  const handleSuccess = () => {
     setOpen(false);
     // Optionally trigger a refresh or update of the parent component
   };

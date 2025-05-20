@@ -25,7 +25,7 @@ interface RepartitionCreateButtonProps {
 export function RepartitionCreateButton({ departments }: RepartitionCreateButtonProps) {
   const [open, setOpen] = useState(false);
   
-  const handleSuccess = (newRepartition: any) => {
+  const handleSuccess = () => {
     setOpen(false);
     // Optionally trigger a refresh or update of the parent component
   };

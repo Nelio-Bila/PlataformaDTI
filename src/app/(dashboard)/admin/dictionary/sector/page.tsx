@@ -4,7 +4,6 @@ import PageContainer from "@/components/layout/page-container";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { SectorTable } from "@/components/admin/dictionary/sector-table";
-import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { SectorCreateButton } from "@/components/admin/dictionary/sector-create-button";
 

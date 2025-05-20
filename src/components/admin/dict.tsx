@@ -34,11 +34,6 @@ export function Dict() {
       <DropdownMenuContent align="end">
         <Link href="/admin/dictionary"><DropdownMenuLabel>Dicionário do Sistema</DropdownMenuLabel></Link>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => router.push("/admin/dictionary")}>
-          <BookOpen className="h-4 w-4 mr-2" />
-          <span>Dicionário</span>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => router.push("/admin/dictionary/direction")}>
           <Building2 className="h-4 w-4 mr-2" />
           <span>Direcções</span>

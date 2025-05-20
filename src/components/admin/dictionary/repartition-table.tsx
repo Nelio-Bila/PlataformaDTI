@@ -115,19 +115,6 @@ export function RepartitionTable({ initialRepartitions, departments }: Repartiti
     );
   };
 
-  // Function to add new repartition to local state
-  const handleRepartitionCreated = (newRepartition: any) => {
-    const departmentName = departments.find(d => d.id === newRepartition.department_id)?.name || '';
-    
-    setRepartitions(prev => [
-      ...prev, 
-      {
-        ...newRepartition,
-        department: { name: departmentName }
-      }
-    ]);
-  };
-
   return (
     <>
       <div className="flex flex-col gap-4">
@@ -234,7 +221,7 @@ export function RepartitionTable({ initialRepartitions, departments }: Repartiti
           <DialogHeader>
             <DialogTitle>Confirmar Eliminação</DialogTitle>
             <DialogDescription>
-              Tem a certeza que pretende eliminar a repartição "{deletingRepartition?.name}"? 
+              Tem a certeza que pretende eliminar a repartição &quot;{deletingRepartition?.name}&quot;? 
               Esta acção não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>

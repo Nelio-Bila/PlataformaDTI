@@ -127,21 +127,6 @@ export function SectorTable({ initialSectors, departments, services }: SectorTab
     );
   };
 
-  // Function to add new sector to local state
-  const handleSectorCreated = (newSector: any) => {
-    const departmentName = departments.find(d => d.id === newSector.department_id)?.name || '';
-    const serviceName = services.find(s => s.id === newSector.service_id)?.name || '';
-    
-    setSectors(prev => [
-      ...prev, 
-      {
-        ...newSector,
-        department: { name: departmentName },
-        service: { name: serviceName }
-      }
-    ]);
-  };
-
   return (
     <>
       <div className="flex flex-col gap-4">
@@ -251,7 +236,7 @@ export function SectorTable({ initialSectors, departments, services }: SectorTab
           <DialogHeader>
             <DialogTitle>Confirmar Eliminação</DialogTitle>
             <DialogDescription>
-              Tem a certeza que pretende eliminar o sector "{deletingSector?.name}"? 
+              Tem a certeza que pretende eliminar o sector &quot;{deletingSector?.name}&quot;? 
               Esta acção não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Download, Upload, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { Download, Upload, AlertCircle, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { 
   AlertDialog,
@@ -39,7 +39,7 @@ export function DatabaseManager() {
         const response = await fetch("/api/database/check-pg-tools");
         const data = await response.json();
         setPgDumpAvailable(data.available);
-      } catch (error) {
+      } catch (/* eslint-disable-next-line @typescript-eslint/no-unused-vars */e) {
         setPgDumpAvailable(false);
       }
     };
@@ -222,9 +222,10 @@ export function DatabaseManager() {
                 <AlertDialogHeader>
                   <AlertDialogTitle>Tem a certeza absoluta?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta acção irá substituir a sua base de dados actual pelo ficheiro de backup.
-                    Todos os dados actuais não incluídos no backup serão perdidos.
-                    Esta acção não pode ser desfeita.
+                    <p>
+                      Tem certeza que deseja restaurar a base de dados a partir do backup &quot;{backupFile?.name}&quot;? 
+                      Esta ação não pode ser desfeita.
+                    </p>
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

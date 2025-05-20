@@ -4,7 +4,6 @@ import PageContainer from "@/components/layout/page-container";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { ServiceTable } from "@/components/admin/dictionary/service-table";
-import { Button } from "@/components/ui/button";
 import { db } from "@/lib/db";
 import { ServiceCreateButton } from "@/components/admin/dictionary/service-create-button";
 

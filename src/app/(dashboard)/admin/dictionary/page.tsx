@@ -3,7 +3,7 @@ import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import PageContainer from "@/components/layout/page-container";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Database, Layers, ListChecks, Network, FolderTree } from "lucide-react";
 import Link from "next/link";
 

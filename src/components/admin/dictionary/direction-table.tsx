@@ -186,7 +186,7 @@ export function DirectionTable({ initialDirections }: DirectionTableProps) {
           <DialogHeader>
             <DialogTitle>Confirmar Eliminação</DialogTitle>
             <DialogDescription>
-              Tem a certeza que pretende eliminar a direcção "{deletingDirection?.name}"? 
+              Tem a certeza que pretende eliminar a direção &quot;{deletingDirection?.name}&quot;? 
               Esta acção não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>

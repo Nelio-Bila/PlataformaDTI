@@ -108,12 +108,6 @@ export function ServiceTable({ initialServices, departments }: ServiceTableProps
     );
   };
 
-  // Function to add new service to local state
-  const handleServiceCreated = (newService: Service) => {
-    const departmentName = departments.find(d => d.id === newService.department_id)?.name || '';
-    setServices(prev => [...prev, {...newService, department: {name: departmentName}}]);
-  };
-
   return (
     <>
       <div className="flex flex-col gap-4">
@@ -220,7 +214,7 @@ export function ServiceTable({ initialServices, departments }: ServiceTableProps
           <DialogHeader>
             <DialogTitle>Confirmar Eliminação</DialogTitle>
             <DialogDescription>
-              Tem a certeza que pretende eliminar o serviço "{deletingService?.name}"? 
+              Tem a certeza que pretende eliminar o serviço &quot;{deletingService?.name}&quot;? 
               Esta acção não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>

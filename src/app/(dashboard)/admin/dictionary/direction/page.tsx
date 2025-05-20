@@ -4,8 +4,6 @@ import PageContainer from "@/components/layout/page-container";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { DirectionTable } from "@/components/admin/dictionary/direction-table";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { db } from "@/lib/db";
 import { DirectionCreateButton } from "@/components/admin/dictionary/direction-create-button";
 

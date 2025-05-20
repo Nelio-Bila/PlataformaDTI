@@ -198,7 +198,7 @@ export function DepartmentTable({ initialDepartments, directions }: DepartmentTa
           <DialogHeader>
             <DialogTitle>Confirmar Eliminação</DialogTitle>
             <DialogDescription>
-              Tem a certeza que pretende eliminar o departamento "{deletingDepartment?.name}"? 
+              Tem a certeza que pretende eliminar o departamento &quot;{deletingDepartment?.name}&quot;? 
               Esta acção não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
