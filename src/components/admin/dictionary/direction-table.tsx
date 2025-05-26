@@ -34,7 +34,6 @@ import { Input } from "@/components/ui/input";
 type Direction = {
   id: string;
   name: string;
-  description: string | null;
 };
 
 interface DirectionTableProps {
@@ -50,8 +49,7 @@ export function DirectionTable({ initialDirections }: DirectionTableProps) {
   const { toast } = useToast();
 
   const filteredDirections = directions.filter(direction => 
-    direction.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (direction.description && direction.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    direction.name.toLowerCase().includes(searchQuery.toLowerCase()) 
   );
 
   const handleDelete = async () => {
@@ -122,9 +120,6 @@ export function DirectionTable({ initialDirections }: DirectionTableProps) {
                 filteredDirections.map((direction) => (
                   <TableRow key={direction.id}>
                     <TableCell className="font-medium">{direction.name}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {direction.description || "-"}
-                    </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
