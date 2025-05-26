@@ -52,7 +52,7 @@ export default async function RepartitionPage() {
         </div>
         
         <p className="text-muted-foreground">
-          Gerencie as repartições da organização. As repartições estão associadas a departamentos.
+          Gere as repartições da organização. As repartições estão associadas a departamentos.
         </p>
         
         <RepartitionTable initialRepartitions={repartitions} departments={departments} />

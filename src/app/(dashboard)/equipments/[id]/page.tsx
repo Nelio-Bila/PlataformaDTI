@@ -5,16 +5,25 @@ import { EquipmentDetailsSkeleton } from "@/components/skeletons/equipment-detai
 import { Button } from "@/components/ui/button";
 import { Equipment } from "@/types/equipment";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Edit, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowLeftCircle, ArrowRightCircle, Edit, Loader2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+
+interface NavigationData {
+  previous: string | null;
+  next: string | null;
+  total: number;
+  current: number;
+}
 
 export default function EquipmentDetails() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(-1);
   const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>({});
+  const [navigating, setNavigating] = useState<boolean>(false);
 
   const { data: equipment, isLoading, error } = useQuery({
     queryKey: ["equipment", id],
@@ -24,6 +33,42 @@ export default function EquipmentDetails() {
       return response.json() as Promise<Equipment>;
     },
   });
+
+  // Fetch navigation data
+  const { data: navigationData, isLoading: isLoadingNavigation } = useQuery({
+    queryKey: ["equipment-navigation", id],
+    queryFn: async () => {
+      const response = await fetch(`/api/equipment/navigation?id=${id}`);
+      if (!response.ok) throw new Error("Houve um erro ao carregar a navegação");
+      return response.json() as Promise<NavigationData>;
+    },
+    enabled: !!id,
+  });
+
+  // Navigation handlers
+  const handleNavigate = useCallback((equipmentId: string | null) => {
+    if (!equipmentId) return;
+    
+    setNavigating(true);
+    router.push(`/equipments/${equipmentId}`);
+  }, [router]);
+
+  // Fix the useEffect with proper dependencies
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Navigate with arrow keys
+      if (e.key === 'ArrowLeft' && navigationData?.next) {
+        handleNavigate(navigationData.next);
+      } else if (e.key === 'ArrowRight' && navigationData?.previous) {
+        handleNavigate(navigationData.previous);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [navigationData, handleNavigate]);
 
   if (isLoading) {
     return <EquipmentDetailsSkeleton />;
@@ -68,6 +113,38 @@ export default function EquipmentDetails() {
             </Link>
           </Button>
         </div>
+        
+        {/* Navigation status */}
+        {navigationData && (
+          <div className="mt-3 text-sm opacity-80">
+            Equipamento {navigationData.current} de {navigationData.total}
+          </div>
+        )}
+      </div>
+
+       {/* Navigation buttons */}
+      <div className="border-t p-4 flex justify-between">
+        <Button 
+          variant="outline" 
+          size="lg"
+          onClick={() => handleNavigate(navigationData?.next)}
+          disabled={!navigationData?.next || navigating || isLoadingNavigation}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeftCircle className="h-5 w-5" />
+          {navigating ? 'Navegando...' : 'Anterior'}
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="lg"
+          onClick={() => handleNavigate(navigationData?.previous)}
+          disabled={!navigationData?.previous || navigating || isLoadingNavigation}
+          className="flex items-center gap-2"
+        >
+          {navigating ? 'Navegando...' : 'Próximo'}
+          <ArrowRightCircle className="h-5 w-5" />
+        </Button>
       </div>
 
       {/* Content */}
@@ -75,7 +152,7 @@ export default function EquipmentDetails() {
         {/* Details Section */}
         <div>
           <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Detalhes</h2>
-          <dl className="space-y-4">
+          <dl className="space-y-4 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <dt className="text-sm font-medium text-gray-500">Tipo</dt>
               <dd className="mt-1 text-lg text-gray-900 dark:text-gray-200">{equipment.type}</dd>
@@ -102,7 +179,7 @@ export default function EquipmentDetails() {
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Repartição</dt>
-              <dd className="mt-1 text-lg text-gray-900 dark:text-gray-200">{equipment.repartition?.name ||"N/D"}</dd>
+              <dd className="mt-1 text-lg text-gray-900 dark:text-gray-200">{equipment.repartition?.name || "N/D"}</dd>
             </div>
             <div>
               <dt className="text-sm font-medium text-gray-500">Data de Compra</dt>
@@ -221,6 +298,31 @@ export default function EquipmentDetails() {
             <p className="text-gray-600 dark:text-gray-100 italic">Nenhuma imagem disponível.</p>
           )}
         </div>
+      </div>
+      
+      {/* Navigation buttons */}
+      <div className="border-t p-4 flex justify-between">
+        <Button 
+          variant="outline" 
+          size="lg"
+          onClick={() => handleNavigate(navigationData?.next)}
+          disabled={!navigationData?.next || navigating || isLoadingNavigation}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeftCircle className="h-5 w-5" />
+          {navigating ? 'Navegando...' : 'Anterior'}
+        </Button>
+        
+        <Button 
+          variant="outline" 
+          size="lg"
+          onClick={() => handleNavigate(navigationData?.previous)}
+          disabled={!navigationData?.previous || navigating || isLoadingNavigation}
+          className="flex items-center gap-2"
+        >
+          {navigating ? 'Navegando...' : 'Próximo'}
+          <ArrowRightCircle className="h-5 w-5" />
+        </Button>
       </div>
     </div>
   );

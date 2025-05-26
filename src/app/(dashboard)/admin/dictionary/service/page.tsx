@@ -52,7 +52,7 @@ export default async function ServicePage() {
         </div>
         
         <p className="text-muted-foreground">
-          Gerencie os serviços da organização. Os serviços estão associados a departamentos.
+          Gere os serviços da organização. Os serviços estão associados a departamentos.
         </p>
         
         <ServiceTable initialServices={services} departments={departments} />

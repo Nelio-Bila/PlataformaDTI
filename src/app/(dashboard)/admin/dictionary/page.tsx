@@ -75,7 +75,7 @@ export default async function DictionaryPage() {
         </div>
         
         <p className="text-muted-foreground">
-          Gerencie os dados de referência usados em todo o sistema. Estas entidades formam a estrutura organizacional para o rastreamento de activos.
+          Gere os dados de referência usados em todo o sistema. Estas entidades formam a estrutura organizacional para o rastreamento de activos.
         </p>
         
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
