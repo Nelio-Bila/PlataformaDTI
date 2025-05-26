@@ -8,10 +8,9 @@ const departmentSchema = z.object({
   direction_id: z.string(),
 });
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, { params } : { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+
   try {
     const session = await auth();
     
@@ -21,7 +20,7 @@ export async function GET(
     }
     
     const department = await db.department.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         direction: {
           select: {
@@ -45,11 +44,9 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, { params } : { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await auth();
     
     // Check authentication
@@ -70,7 +67,7 @@ export async function PATCH(
     
     // Check if department exists
     const existingDepartment = await db.department.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
     
     if (!existingDepartment) {
@@ -96,7 +93,7 @@ export async function PATCH(
         where: {
           name: validatedData.data.name,
           direction_id: validatedData.data.direction_id,
-          id: { not: params.id },
+          id: { not: id },
         },
       });
       
@@ -110,7 +107,7 @@ export async function PATCH(
     
     // Update department
     const updatedDepartment = await db.department.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         name: validatedData.data.name,
         direction_id: validatedData.data.direction_id,
@@ -134,11 +131,9 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, { params } : { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await auth();
     
     // Check authentication
@@ -148,7 +143,7 @@ export async function DELETE(
     
     // Check if department exists
     const department = await db.department.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         services: { select: { id: true }, take: 1 },
         sectors: { select: { id: true }, take: 1 },
@@ -184,7 +179,7 @@ export async function DELETE(
     
     // Delete department
     await db.department.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
     
     return NextResponse.json({ success: true });

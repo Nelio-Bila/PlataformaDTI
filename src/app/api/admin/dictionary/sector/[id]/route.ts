@@ -9,11 +9,9 @@ const sectorSchema = z.object({
   service_id: z.string(),
 });
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, { params } : { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await auth();
     
     // Check authentication
@@ -22,7 +20,7 @@ export async function GET(
     }
     
     const sector = await db.sector.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         department: {
           select: {
@@ -51,11 +49,9 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, { params } : { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await auth();
     
     // Check authentication
@@ -76,7 +72,7 @@ export async function PATCH(
     
     // Check if sector exists
     const existingSector = await db.sector.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
     
     if (!existingSector) {
@@ -120,7 +116,7 @@ export async function PATCH(
           name: validatedData.data.name,
           department_id: validatedData.data.department_id,
           service_id: validatedData.data.service_id,
-          id: { not: params.id },
+          id: { not: id },
         },
       });
       
@@ -164,11 +160,9 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, { params } : { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await auth();
     
     // Check authentication
@@ -178,7 +172,7 @@ export async function DELETE(
     
     // Check if sector exists
     const sector = await db.sector.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         equipments: { select: { id: true }, take: 1 },
       },
@@ -198,7 +192,7 @@ export async function DELETE(
     
     // Delete sector
     await db.sector.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
     
     return NextResponse.json({ success: true });
