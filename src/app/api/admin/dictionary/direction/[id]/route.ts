@@ -7,11 +7,9 @@ const directionSchema = z.object({
   name: z.string().min(2).max(100),
 });
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, { params } : { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await auth();
     
     // Check authentication
@@ -20,7 +18,7 @@ export async function GET(
     }
     
     const direction = await db.direction.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
     
     if (!direction) {
@@ -37,11 +35,9 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, { params } : { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await auth();
     
     // Check authentication
@@ -62,7 +58,7 @@ export async function PATCH(
     
     // Check if direction exists
     const existingDirection = await db.direction.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
     
     if (!existingDirection) {
@@ -74,7 +70,7 @@ export async function PATCH(
       const nameExists = await db.direction.findFirst({
         where: {
           name: validatedData.data.name,
-          id: { not: params.id },
+          id: { not: id },
         },
       });
       
@@ -88,7 +84,7 @@ export async function PATCH(
     
     // Update direction
     const updatedDirection = await db.direction.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         name: validatedData.data.name,
       },
@@ -104,11 +100,9 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, { params } : { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await auth();
     
     // Check authentication
@@ -118,7 +112,7 @@ export async function DELETE(
     
     // Check if direction exists
     const direction = await db.direction.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         departments: { select: { id: true }, take: 1 },
       },
@@ -138,7 +132,7 @@ export async function DELETE(
     
     // Delete direction
     await db.direction.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
     
     return NextResponse.json({ success: true });

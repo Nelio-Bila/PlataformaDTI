@@ -8,11 +8,9 @@ const repartitionSchema = z.object({
   department_id: z.string(),
 });
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, { params } : { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await auth();
     
     // Check authentication
@@ -21,7 +19,7 @@ export async function GET(
     }
     
     const repartition = await db.repartition.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         department: {
           select: {
@@ -45,11 +43,9 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, { params } : { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await auth();
     
     // Check authentication
@@ -70,7 +66,7 @@ export async function PATCH(
     
     // Check if repartition exists
     const existingRepartition = await db.repartition.findUnique({
-      where: { id: params.id },
+      where: { id: id },
     });
     
     if (!existingRepartition) {
@@ -96,7 +92,7 @@ export async function PATCH(
         where: {
           name: validatedData.data.name,
           department_id: validatedData.data.department_id,
-          id: { not: params.id },
+          id: { not: id },
         },
       });
       
@@ -110,7 +106,7 @@ export async function PATCH(
     
     // Update repartition
     const updatedRepartition = await db.repartition.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         name: validatedData.data.name,
         department_id: validatedData.data.department_id,
@@ -134,11 +130,9 @@ export async function PATCH(
   }
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, { params } : { params: Promise<{ id: string }> }) {
   try {
+    const { id } = await params;
     const session = await auth();
     
     // Check authentication
@@ -148,7 +142,7 @@ export async function DELETE(
     
     // Check if repartition exists
     const repartition = await db.repartition.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         equipments: { select: { id: true }, take: 1 },
       },
@@ -168,7 +162,7 @@ export async function DELETE(
     
     // Delete repartition
     await db.repartition.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
     
     return NextResponse.json({ success: true });
