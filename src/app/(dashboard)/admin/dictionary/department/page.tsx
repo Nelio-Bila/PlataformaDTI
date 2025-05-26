@@ -52,7 +52,7 @@ export default async function DepartmentPage() {
         </div>
         
         <p className="text-muted-foreground">
-          Gerencie os departamentos da organização. Os departamentos estão associados a uma direcção.
+          Gere os departamentos da organização. Os departamentos estão associados a uma direcção.
         </p>
         
         <DepartmentTable initialDepartments={departments} directions={directions} />

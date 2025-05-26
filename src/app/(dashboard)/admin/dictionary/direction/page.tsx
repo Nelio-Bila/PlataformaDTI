@@ -43,7 +43,7 @@ export default async function DirectionPage() {
         </div>
         
         <p className="text-muted-foreground">
-          Gerencie as direcções da organização. As direcções são o nível superior da estrutura organizacional.
+          Gere as direcções da organização. As direcções são o nível superior da estrutura organizacional.
         </p>
         
         <DirectionTable initialDirections={directions} />

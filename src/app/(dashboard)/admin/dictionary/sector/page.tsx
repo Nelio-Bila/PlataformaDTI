@@ -59,7 +59,7 @@ export default async function SectorPage() {
         </div>
         
         <p className="text-muted-foreground">
-          Gerencie os sectores da organização. Os sectores estão associados a departamentos e serviços.
+          Gere os sectores da organização. Os sectores estão associados a departamentos e serviços.
         </p>
         
         <SectorTable 
