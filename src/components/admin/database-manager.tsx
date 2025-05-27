@@ -1,19 +1,23 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { Download, Upload, AlertCircle, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
-import { 
+  useEffect,
+  useState,
+} from 'react';
+
+import {
+  AlertCircle,
+  Download,
+  Loader2,
+  Upload,
+} from 'lucide-react';
+
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/components/ui/alert';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -23,8 +27,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
 
 export function DatabaseManager() {
   const { toast } = useToast();
@@ -76,7 +90,7 @@ export function DatabaseManager() {
       toast({
         title: "Backup Criado",
         description: "O backup da sua base de dados foi criado com sucesso.",
-        variant: "success",
+        variant: "default",
       });
     } catch (error) {
       console.error("Backup error:", error);
@@ -118,7 +132,7 @@ export function DatabaseManager() {
       toast({
         title: "Base de Dados Restaurada",
         description: "A sua base de dados foi restaurada com sucesso.",
-        variant: "success",
+        variant: "default",
       });
       
       // Reset the file input

@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -32,7 +31,6 @@ const formSchema = z.object({
   }).max(100, {
     message: "O nome não pode ter mais de 100 caracteres."
   }),
-  description: z.string().optional(),
   department_id: z.string({
     required_error: "Por favor selecione um departamento",
   }),
@@ -49,11 +47,11 @@ interface RepartitionFormProps {
   initialData?: {
     id: string;
     name: string;
-    description?: string | null;
     department_id: string;
   };
   departments: Department[];
   closeDialog: () => void;
+  onSuccess?: (updatedRepartition: any) => void;
 }
 
 export function RepartitionForm({ initialData, departments, closeDialog }: RepartitionFormProps) {
@@ -64,7 +62,6 @@ export function RepartitionForm({ initialData, departments, closeDialog }: Repar
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialData?.name || "",
-      description: initialData?.description || "",
       department_id: initialData?.department_id || "",
     },
   });
@@ -87,10 +84,11 @@ export function RepartitionForm({ initialData, departments, closeDialog }: Repar
           throw new Error("Falha ao atualizar a repartição");
         }
         
+
         toast({
           title: "Repartição atualizada",
           description: "A repartição foi atualizada com sucesso.",
-          variant: "success",
+          variant: "default",
         });
       } else {
         // Create new repartition
@@ -109,7 +107,7 @@ export function RepartitionForm({ initialData, departments, closeDialog }: Repar
         toast({
           title: "Repartição criada",
           description: "A repartição foi criada com sucesso.",
-          variant: "success",
+          variant: "default",
         });
         
         // Reset form
@@ -181,27 +179,6 @@ export function RepartitionForm({ initialData, departments, closeDialog }: Repar
           )}
         />
         
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Descrição</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Descrição da repartição" 
-                  className="resize-none min-h-[100px]"
-                  {...field}
-                  value={field.value || ""}
-                />
-              </FormControl>
-              <FormDescription>
-                Breve descrição das funções da repartição (opcional).
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="outline" onClick={closeDialog}>

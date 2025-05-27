@@ -39,7 +39,6 @@ type Direction = {
 type Department = {
   id: string;
   name: string;
-  description: string | null;
   direction_id: string;
   direction: { name: string };
 };
@@ -59,8 +58,7 @@ export function DepartmentTable({ initialDepartments, directions }: DepartmentTa
 
   const filteredDepartments = departments.filter(department => 
     department.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    department.direction.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (department.description && department.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    department.direction.name.toLowerCase().includes(searchQuery.toLowerCase()) 
   );
 
   const handleDelete = async () => {
@@ -81,7 +79,7 @@ export function DepartmentTable({ initialDepartments, directions }: DepartmentTa
       toast({
         title: "Departamento eliminado",
         description: "O departamento foi eliminado com sucesso.",
-        variant: "success",
+        variant: "default",
       });
     } catch (error) {
       console.error("Error deleting department:", error);
@@ -117,7 +115,6 @@ export function DepartmentTable({ initialDepartments, directions }: DepartmentTa
               <TableRow>
                 <TableHead>Nome</TableHead>
                 <TableHead>Direcção</TableHead>
-                <TableHead className="hidden md:table-cell">Descrição</TableHead>
                 <TableHead className="w-[80px]">Acções</TableHead>
               </TableRow>
             </TableHeader>
@@ -133,9 +130,6 @@ export function DepartmentTable({ initialDepartments, directions }: DepartmentTa
                   <TableRow key={department.id}>
                     <TableCell className="font-medium">{department.name}</TableCell>
                     <TableCell>{department.direction.name}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {department.description || "-"}
-                    </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

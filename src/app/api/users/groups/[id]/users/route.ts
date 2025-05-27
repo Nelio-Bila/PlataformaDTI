@@ -1,12 +1,15 @@
 // src/app/api/groups/[id]/users/route.ts
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { checkAdminPermission } from "@/lib/auth-utils";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Check authentication and admin permissions
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const permissionCheck = checkAdminPermission(session);
+  if (permissionCheck) {
+    return permissionCheck;
   }
 
   const { id } = await params;
@@ -39,9 +42,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  // Check authentication and admin permissions
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const permissionCheck = checkAdminPermission(session);
+  if (permissionCheck) {
+    return permissionCheck;
   }
 
   const { id } = await params; // Group ID

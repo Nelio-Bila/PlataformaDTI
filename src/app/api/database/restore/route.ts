@@ -11,10 +11,18 @@ const execAsync = promisify(exec);
 
 export async function POST(req: NextRequest) {
   try {
-    // Check authentication and admin permissions
+    // Check authentication and admin group membership
     const session = await auth();
-    if (!session?.user || !session.user.isAdmin) {
+    if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if user belongs to Admins group
+    const userGroups = session.user.groups || [];
+    const isAdmin = userGroups.some(group => group.name === "Admins");
+    
+    if (!isAdmin) {
+      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
 
     // Parse DATABASE_URL to extract connection details

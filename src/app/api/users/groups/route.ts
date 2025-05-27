@@ -1,13 +1,17 @@
+import { NextResponse } from 'next/server';
+
 // src/app/api/groups/route.ts
-import { auth } from "@/auth";
-import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { auth } from '@/auth';
+import { checkAdminPermission } from '@/lib/auth-utils';
+import { db } from '@/lib/db';
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    // Check authentication and admin permissions
+    const session = await auth();
+    const permissionCheck = checkAdminPermission(session);
+    if (permissionCheck) {
+      return permissionCheck;
+    }
 
   try {
     const groups = await db.group.findMany({
@@ -22,10 +26,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    // Check authentication and admin permissions
+    const session = await auth();
+    const permissionCheck = checkAdminPermission(session);
+    if (permissionCheck) {
+      return permissionCheck;
+    }
 
   const { name, description, permissionIds } = await request.json();
 

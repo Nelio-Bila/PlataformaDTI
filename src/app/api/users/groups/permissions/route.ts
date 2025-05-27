@@ -1,13 +1,18 @@
+import { NextResponse } from 'next/server';
+
 // src/app/api/permissions/route.ts
-import { auth } from "@/auth";
-import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { auth } from '@/auth';
+import { checkAdminPermission } from '@/lib/auth-utils';
+import { db } from '@/lib/db';
 
 export async function GET() {
+  // Check authentication and admin permissions
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const permissionCheck = checkAdminPermission(session);
+  if (permissionCheck) {
+    return permissionCheck;
   }
+
 
   try {
     const permissions = await db.permission.findMany({
@@ -21,9 +26,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  // Check authentication and admin permissions
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const permissionCheck = checkAdminPermission(session);
+  if (permissionCheck) {
+    return permissionCheck;
   }
 
   const { name, description } = await request.json();

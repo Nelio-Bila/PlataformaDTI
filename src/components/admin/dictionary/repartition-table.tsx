@@ -39,7 +39,6 @@ type Department = {
 type Repartition = {
   id: string;
   name: string;
-  description: string | null;
   department_id: string;
   department: { name: string };
 };
@@ -59,8 +58,7 @@ export function RepartitionTable({ initialRepartitions, departments }: Repartiti
 
   const filteredRepartitions = repartitions.filter(repartition => 
     repartition.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    repartition.department.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (repartition.description && repartition.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    repartition.department.name.toLowerCase().includes(searchQuery.toLowerCase()) 
   );
 
   const handleDelete = async () => {
@@ -82,7 +80,7 @@ export function RepartitionTable({ initialRepartitions, departments }: Repartiti
       toast({
         title: "Repartição eliminada",
         description: "A repartição foi eliminada com sucesso.",
-        variant: "success",
+        variant: "default",
       });
     } catch (error) {
       console.error("Error deleting repartition:", error);
@@ -152,9 +150,6 @@ export function RepartitionTable({ initialRepartitions, departments }: Repartiti
                   <TableRow key={repartition.id}>
                     <TableCell className="font-medium">{repartition.name}</TableCell>
                     <TableCell>{repartition.department?.name}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {repartition.description || "-"}
-                    </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

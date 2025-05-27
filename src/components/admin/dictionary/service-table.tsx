@@ -1,22 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState } from 'react';
+
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Edit,
+  MoreHorizontal,
+  Trash2,
+} from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
@@ -24,12 +16,27 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Edit, MoreHorizontal, Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { ServiceForm } from "./service-form";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { useToast } from '@/hooks/use-toast';
+
+import { ServiceForm } from './service-form';
 
 type Department = {
   id: string;
@@ -39,9 +46,8 @@ type Department = {
 type Service = {
   id: string;
   name: string;
-  description: string | null;
-  department_id: string;
-  department: { name: string };
+  department_id: string | null;
+  department: { name: string; id: string; direction_id: string; created_at: Date; updated_at: Date; } | null;
 };
 
 interface ServiceTableProps {
@@ -59,8 +65,7 @@ export function ServiceTable({ initialServices, departments }: ServiceTableProps
 
   const filteredServices = services.filter(service => 
     service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    service.department.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (service.description && service.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    service.department?.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleDelete = async () => {
@@ -82,7 +87,7 @@ export function ServiceTable({ initialServices, departments }: ServiceTableProps
       toast({
         title: "Serviço eliminado",
         description: "O serviço foi eliminado com sucesso.",
-        variant: "success",
+        variant: "default",
       });
     } catch (error) {
       console.error("Error deleting service:", error);
@@ -100,11 +105,28 @@ export function ServiceTable({ initialServices, departments }: ServiceTableProps
   // Function to update local state when a service is updated
   const handleServiceUpdated = (updatedService: Service) => {
     setServices(prev => 
-      prev.map(service => 
-        service.id === updatedService.id ? 
-          {...service, ...updatedService, department: {name: departments.find(d => d.id === updatedService.department_id)?.name || ''}} : 
-          service
-      )
+      prev.map(service => {
+        if (service.id === updatedService.id) {
+          // Find the department details from the departments array
+          const departmentDetails = departments.find(d => d.id === updatedService.department_id);
+          
+          return {
+            ...service,
+            ...updatedService,
+            // Only update department if we have department_id and can find the department
+            department: updatedService.department_id && departmentDetails ? {
+              name: departmentDetails.name,
+              id: departmentDetails.id,
+              // These fields might not be available in the departments array
+              // so we'll use placeholder values or keep existing ones
+              direction_id: service.department?.direction_id || '',
+              created_at: service.department?.created_at || new Date(),
+              updated_at: service.department?.updated_at || new Date(),
+            } : null
+          };
+        }
+        return service;
+      })
     );
   };
 
@@ -145,9 +167,6 @@ export function ServiceTable({ initialServices, departments }: ServiceTableProps
                   <TableRow key={service.id}>
                     <TableCell className="font-medium">{service.name}</TableCell>
                     <TableCell>{service.department?.name}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {service.description || "-"}
-                    </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

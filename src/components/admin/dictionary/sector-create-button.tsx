@@ -21,7 +21,7 @@ type Department = {
 type Service = {
   id: string;
   name: string;
-  department_id: string;
+  department_id: string | null;
 };
 
 interface SectorCreateButtonProps {

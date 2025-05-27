@@ -46,7 +46,7 @@ export default function EquipmentDetails() {
   });
 
   // Navigation handlers
-  const handleNavigate = useCallback((equipmentId: string | null) => {
+  const handleNavigate = useCallback((equipmentId: string | null | undefined) => {
     if (!equipmentId) return;
     
     setNavigating(true);

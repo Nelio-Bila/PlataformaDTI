@@ -1,11 +1,15 @@
-import { auth } from "@/auth";
-import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+
+import { auth } from '@/auth';
+import { checkAdminPermission } from '@/lib/auth-utils';
+import { db } from '@/lib/db';
 
 export async function POST(request: Request) {
+  // Check authentication and admin permissions
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const permissionCheck = checkAdminPermission(session);
+  if (permissionCheck) {
+    return permissionCheck;
   }
 
   const { ids } = await request.json();
