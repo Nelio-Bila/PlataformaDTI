@@ -79,7 +79,7 @@ export function DepartmentTable({ initialDepartments, directions }: DepartmentTa
       toast({
         title: "Departamento eliminado",
         description: "O departamento foi eliminado com sucesso.",
-        variant: "success",
+        variant: "default",
       });
     } catch (error) {
       console.error("Error deleting department:", error);

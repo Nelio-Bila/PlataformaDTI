@@ -106,7 +106,7 @@ export async function PATCH(req: NextRequest, { params } : { params: Promise<{ i
     
     // Update service
     const updatedService = await db.service.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         name: validatedData.data.name,
         department_id: validatedData.data.department_id,
@@ -144,7 +144,7 @@ export async function DELETE(req: NextRequest, { params } : { params: Promise<{ 
     const service = await db.service.findUnique({
       where: { id: id },
       include: {
-        sectors: { select: { id: true }, take: 1 },
+        Sector: { select: { id: true }, take: 1 },
       },
     });
     
@@ -153,7 +153,7 @@ export async function DELETE(req: NextRequest, { params } : { params: Promise<{ 
     }
     
     // Check if service has related sectors
-    if (service.sectors.length > 0) {
+    if ((service as any).Sector.length > 0) {
       return NextResponse.json(
         { error: "Não é possível excluir o serviço porque existem sectores associados" },
         { status: 400 }

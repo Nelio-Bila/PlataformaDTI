@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -32,7 +31,6 @@ const formSchema = z.object({
   }).max(100, {
     message: "O nome não pode ter mais de 100 caracteres."
   }),
-  description: z.string().optional(),
   department_id: z.string({
     required_error: "Por favor selecione um departamento",
   }),
@@ -49,7 +47,7 @@ type Department = {
 type Service = {
   id: string;
   name: string;
-  department_id: string;
+  department_id: string | null;
 };
 
 type SectorFormValues = z.infer<typeof formSchema>;
@@ -58,13 +56,13 @@ interface SectorFormProps {
   initialData?: {
     id: string;
     name: string;
-    description?: string | null;
-    department_id: string;
-    service_id: string;
+    department_id: string | null;
+    service_id: string | null;
   };
   departments: Department[];
   services: Service[];
   closeDialog: () => void;
+  onSuccess?: (updatedSector: any) => void;
 }
 
 export function SectorForm({ initialData, departments, services, closeDialog }: SectorFormProps) {
@@ -76,7 +74,6 @@ export function SectorForm({ initialData, departments, services, closeDialog }: 
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialData?.name || "",
-      description: initialData?.description || "",
       department_id: initialData?.department_id || "",
       service_id: initialData?.service_id || "",
     },
@@ -119,9 +116,9 @@ export function SectorForm({ initialData, departments, services, closeDialog }: 
         }
         
         toast({
-          title: "Sector atualizado",
+          title: "Sector actualizado",
           description: "O sector foi atualizado com sucesso.",
-          variant: "success",
+          variant: "default",
         });
       } else {
         // Create new sector
@@ -140,7 +137,7 @@ export function SectorForm({ initialData, departments, services, closeDialog }: 
         toast({
           title: "Sector criado",
           description: "O sector foi criado com sucesso.",
-          variant: "success",
+          variant: "default",
         });
         
         // Reset form
@@ -250,27 +247,6 @@ export function SectorForm({ initialData, departments, services, closeDialog }: 
           )}
         />
         
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Descrição</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Descrição do sector" 
-                  className="resize-none min-h-[100px]"
-                  {...field}
-                  value={field.value || ""}
-                />
-              </FormControl>
-              <FormDescription>
-                Breve descrição das funções do sector (opcional).
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="outline" onClick={closeDialog}>

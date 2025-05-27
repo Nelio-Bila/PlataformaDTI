@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -32,7 +31,6 @@ const formSchema = z.object({
   }).max(100, {
     message: "O nome não pode ter mais de 100 caracteres."
   }),
-  description: z.string().optional(),
   department_id: z.string({
     required_error: "Por favor selecione um departamento",
   }),
@@ -49,8 +47,7 @@ interface ServiceFormProps {
   initialData?: {
     id: string;
     name: string;
-    description?: string | null;
-    department_id: string;
+    department_id: string | null;
   };
   departments: Department[];
   closeDialog: () => void;
@@ -65,7 +62,6 @@ export function ServiceForm({ initialData, departments, closeDialog, onSuccess }
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialData?.name || "",
-      description: initialData?.description || "",
       department_id: initialData?.department_id || "",
     },
   });
@@ -91,7 +87,7 @@ export function ServiceForm({ initialData, departments, closeDialog, onSuccess }
         toast({
           title: "Serviço atualizado",
           description: "O serviço foi atualizado com sucesso.",
-          variant: "success",
+          variant: "default",
         });
 
         if (onSuccess) {
@@ -117,7 +113,7 @@ export function ServiceForm({ initialData, departments, closeDialog, onSuccess }
         toast({
           title: "Serviço criado",
           description: "O serviço foi criado com sucesso.",
-          variant: "success",
+          variant: "default",
         });
         
         const createdService = await response.json();
@@ -188,28 +184,6 @@ export function ServiceForm({ initialData, departments, closeDialog, onSuccess }
               </Select>
               <FormDescription>
                 O departamento ao qual este serviço pertence.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Descrição</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Descrição do serviço" 
-                  className="resize-none min-h-[100px]"
-                  {...field}
-                  value={field.value || ""}
-                />
-              </FormControl>
-              <FormDescription>
-                Breve descrição das funções do serviço (opcional).
               </FormDescription>
               <FormMessage />
             </FormItem>

@@ -70,7 +70,7 @@ export function DirectionTable({ initialDirections }: DirectionTableProps) {
       toast({
         title: "Direcção eliminada",
         description: "A direcção foi eliminada com sucesso.",
-        variant: "success",
+        variant: "default",
       });
     } catch (error) {
       console.error("Error deleting direction:", error);

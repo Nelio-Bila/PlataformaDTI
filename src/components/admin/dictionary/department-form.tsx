@@ -1,9 +1,12 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+
+import { Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import * as z from 'zod';
+
+import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -12,19 +15,18 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { zodResolver } from '@hookform/resolvers/zod';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -90,7 +92,7 @@ export function DepartmentForm({ initialData, directions, closeDialog }: Departm
         toast({
           title: "Departamento atualizado",
           description: "O departamento foi atualizado com sucesso.",
-          variant: "success",
+          variant: "default",
         });
       } else {
         // Create new department
@@ -109,7 +111,7 @@ export function DepartmentForm({ initialData, directions, closeDialog }: Departm
         toast({
           title: "Departamento criado",
           description: "O departamento foi criado com sucesso.",
-          variant: "success",
+          variant: "default",
         });
         
         // Reset form

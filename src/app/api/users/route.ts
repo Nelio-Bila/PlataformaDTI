@@ -1,19 +1,23 @@
 // src/app/api/users/route.ts
 
-import { auth } from "@/auth";
-import { db } from "@/lib/db";
-import { hash } from "bcryptjs";
-import { NextResponse } from "next/server";
+import { hash } from 'bcryptjs';
+import { NextResponse } from 'next/server';
+
+import { auth } from '@/auth';
+import { checkAdminPermission } from '@/lib/auth-utils';
+import { db } from '@/lib/db';
 
 export async function GET(request: Request) {
+  // Check authentication and admin permissions
   const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const permissionCheck = checkAdminPermission(session);
+  if (permissionCheck) {
+    return permissionCheck;
   }
 
   // Fetch user's groups and permissions
   const userGroups = await db.userGroup.findMany({
-    where: { user_id: session.user.id },
+    where: { user_id: session?.user.id },
     include: {
       group: {
         include: {
@@ -98,10 +102,10 @@ export async function POST(request: Request) {
         password: hashedPassword,
         groups: groupIds && groupIds.length > 0
           ? {
-              create: groupIds.map((groupId: string) => ({
-                group_id: groupId,
-              })),
-            }
+            create: groupIds.map((groupId: string) => ({
+              group_id: groupId,
+            })),
+          }
           : undefined,
       },
       include: { groups: { include: { group: true } } },

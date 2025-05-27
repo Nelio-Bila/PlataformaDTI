@@ -130,7 +130,7 @@ export async function PATCH(req: NextRequest, { params } : { params: Promise<{ i
     
     // Update sector
     const updatedSector = await db.sector.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         name: validatedData.data.name,
         department_id: validatedData.data.department_id,
@@ -174,7 +174,7 @@ export async function DELETE(req: NextRequest, { params } : { params: Promise<{ 
     const sector = await db.sector.findUnique({
       where: { id: id },
       include: {
-        equipments: { select: { id: true }, take: 1 },
+        equipment: { select: { id: true }, take: 1 },
       },
     });
     
@@ -183,7 +183,7 @@ export async function DELETE(req: NextRequest, { params } : { params: Promise<{ 
     }
     
     // Check if sector has related equipment
-    if (sector.equipments.length > 0) {
+    if (sector.equipment.length > 0) {
       return NextResponse.json(
         { error: "Não é possível excluir o sector porque existem equipamentos associados" },
         { status: 400 }

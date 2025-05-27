@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -25,7 +24,6 @@ const formSchema = z.object({
   }).max(100, {
     message: "O nome não pode ter mais de 100 caracteres."
   }),
-  description: z.string().optional(),
 });
 
 type DirectionFormValues = z.infer<typeof formSchema>;
@@ -34,7 +32,6 @@ interface DirectionFormProps {
   initialData?: {
     id: string;
     name: string;
-    description?: string | null;
   };
   closeDialog: () => void;
 }
@@ -47,7 +44,6 @@ export function DirectionForm({ initialData, closeDialog }: DirectionFormProps) 
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialData?.name || "",
-      description: initialData?.description || "",
     },
   });
   
@@ -72,7 +68,7 @@ export function DirectionForm({ initialData, closeDialog }: DirectionFormProps) 
         toast({
           title: "Direcção atualizada",
           description: "A direcção foi atualizada com sucesso.",
-          variant: "success",
+          variant: "default",
         });
       } else {
         // Create new direction
@@ -91,7 +87,7 @@ export function DirectionForm({ initialData, closeDialog }: DirectionFormProps) 
         toast({
           title: "Direcção criada",
           description: "A direcção foi criada com sucesso.",
-          variant: "success",
+          variant: "default",
         });
         
         // Reset form
@@ -131,28 +127,7 @@ export function DirectionForm({ initialData, closeDialog }: DirectionFormProps) 
             </FormItem>
           )}
         />
-        
-        <FormField
-          control={form.control}
-          name="description"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Descrição</FormLabel>
-              <FormControl>
-                <Textarea 
-                  placeholder="Descrição da direcção" 
-                  className="resize-none min-h-[100px]"
-                  {...field}
-                  value={field.value || ""}
-                />
-              </FormControl>
-              <FormDescription>
-                Breve descrição das funções da direcção (opcional).
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+      
         
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="outline" onClick={closeDialog}>

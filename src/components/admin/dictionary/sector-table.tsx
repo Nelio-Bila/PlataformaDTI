@@ -39,17 +39,16 @@ type Department = {
 type Service = {
   id: string;
   name: string;
-  department_id: string;
+  department_id: string | null;
 };
 
 type Sector = {
   id: string;
   name: string;
-  description: string | null;
-  department_id: string;
-  service_id: string;
-  department: { name: string };
-  service: { name: string };
+  department_id: string | null;
+  service_id: string | null;
+  department: {  name: string; id: string; created_at: Date; updated_at: Date; direction_id: string; } | null ;
+  service: { id: string; name: string; direction_id: string | null; created_at: Date; updated_at: Date; department_id: string | null; } | null;
 };
 
 interface SectorTableProps {
@@ -58,7 +57,11 @@ interface SectorTableProps {
   services: Service[];
 }
 
-export function SectorTable({ initialSectors, departments, services }: SectorTableProps) {
+export function SectorTable({
+  initialSectors,
+  departments,
+  services,
+}: SectorTableProps) {
   const [sectors, setSectors] = useState<Sector[]>(initialSectors);
   const [editingSector, setEditingSector] = useState<Sector | null>(null);
   const [deletingSector, setDeletingSector] = useState<Sector | null>(null);
@@ -66,11 +69,13 @@ export function SectorTable({ initialSectors, departments, services }: SectorTab
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
 
-  const filteredSectors = sectors.filter(sector => 
-    sector.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    sector.department.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    sector.service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (sector.description && sector.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredSectors = sectors.filter(
+    (sector) =>
+      sector.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      sector.department?.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      sector.service?.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleDelete = async () => {
@@ -78,27 +83,33 @@ export function SectorTable({ initialSectors, departments, services }: SectorTab
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/admin/dictionary/sector/${deletingSector.id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/admin/dictionary/sector/${deletingSector.id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Falha ao eliminar o sector");
       }
 
-      setSectors(sectors.filter(s => s.id !== deletingSector.id));
-      
+      setSectors(sectors.filter((s) => s.id !== deletingSector.id));
+
       toast({
         title: "Sector eliminado",
         description: "O sector foi eliminado com sucesso.",
-        variant: "success",
+        variant: "default",
       });
     } catch (error) {
       console.error("Error deleting sector:", error);
       toast({
         title: "Erro ao eliminar",
-        description: error instanceof Error ? error.message : "Ocorreu um erro ao eliminar o sector",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Ocorreu um erro ao eliminar o sector",
         variant: "destructive",
       });
     } finally {
@@ -109,17 +120,20 @@ export function SectorTable({ initialSectors, departments, services }: SectorTab
 
   // Function to update local state when a sector is updated
   const handleSectorUpdated = (updatedSector: any) => {
-    setSectors(prev => 
-      prev.map(sector => {
+    setSectors((prev) =>
+      prev.map((sector) => {
         if (sector.id === updatedSector.id) {
-          const departmentName = departments.find(d => d.id === updatedSector.department_id)?.name || '';
-          const serviceName = services.find(s => s.id === updatedSector.service_id)?.name || '';
-          
+          const departmentName =
+            departments.find((d) => d.id === updatedSector.department_id)
+              ?.name || "";
+          const serviceName =
+            services.find((s) => s.id === updatedSector.service_id)?.name || "";
+
           return {
             ...sector,
             ...updatedSector,
             department: { name: departmentName },
-            service: { name: serviceName }
+            service: { name: serviceName },
           };
         }
         return sector;
@@ -138,10 +152,11 @@ export function SectorTable({ initialSectors, departments, services }: SectorTab
             onChange={(e) => setSearchQuery(e.target.value)}
           />
           <div className="text-sm text-muted-foreground">
-            Total: {filteredSectors.length} {filteredSectors.length === 1 ? "sector" : "sectores"}
+            Total: {filteredSectors.length}{" "}
+            {filteredSectors.length === 1 ? "sector" : "sectores"}
           </div>
         </div>
-        
+
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -149,7 +164,9 @@ export function SectorTable({ initialSectors, departments, services }: SectorTab
                 <TableHead>Nome</TableHead>
                 <TableHead>Departamento</TableHead>
                 <TableHead>Serviço</TableHead>
-                <TableHead className="hidden md:table-cell">Descrição</TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Descrição
+                </TableHead>
                 <TableHead className="w-[80px]">Acções</TableHead>
               </TableRow>
             </TableHeader>
@@ -166,9 +183,6 @@ export function SectorTable({ initialSectors, departments, services }: SectorTab
                     <TableCell className="font-medium">{sector.name}</TableCell>
                     <TableCell>{sector.department?.name}</TableCell>
                     <TableCell>{sector.service?.name}</TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {sector.description || "-"}
-                    </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -180,11 +194,13 @@ export function SectorTable({ initialSectors, departments, services }: SectorTab
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acções</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setEditingSector(sector)}>
+                          <DropdownMenuItem
+                            onClick={() => setEditingSector(sector)}
+                          >
                             <Edit className="mr-2 h-4 w-4" />
                             Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem 
+                          <DropdownMenuItem
                             onClick={() => setDeletingSector(sector)}
                             className="text-destructive focus:text-destructive"
                           >
@@ -203,9 +219,12 @@ export function SectorTable({ initialSectors, departments, services }: SectorTab
       </div>
 
       {/* Edit Dialog */}
-      <Dialog open={!!editingSector} onOpenChange={(open) => {
-        if (!open) setEditingSector(null);
-      }}>
+      <Dialog
+        open={!!editingSector}
+        onOpenChange={(open) => {
+          if (!open) setEditingSector(null);
+        }}
+      >
         <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
             <DialogTitle>Editar Sector</DialogTitle>
@@ -214,7 +233,7 @@ export function SectorTable({ initialSectors, departments, services }: SectorTab
             </DialogDescription>
           </DialogHeader>
           {editingSector && (
-            <SectorForm 
+            <SectorForm
               initialData={editingSector}
               departments={departments}
               services={services}
@@ -229,24 +248,27 @@ export function SectorTable({ initialSectors, departments, services }: SectorTab
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={!!deletingSector} onOpenChange={(open) => {
-        if (!open) setDeletingSector(null);
-      }}>
+      <Dialog
+        open={!!deletingSector}
+        onOpenChange={(open) => {
+          if (!open) setDeletingSector(null);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Confirmar Eliminação</DialogTitle>
             <DialogDescription>
-              Tem a certeza que pretende eliminar o sector &quot;{deletingSector?.name}&quot;? 
-              Esta acção não pode ser desfeita.
+              Tem a certeza que pretende eliminar o sector &quot;
+              {deletingSector?.name}&quot;? Esta acção não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeletingSector(null)}>
               Cancelar
             </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleDelete} 
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
               disabled={isDeleting}
             >
               {isDeleting ? "A eliminar..." : "Eliminar"}

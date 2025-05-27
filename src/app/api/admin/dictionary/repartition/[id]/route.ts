@@ -144,7 +144,7 @@ export async function DELETE(req: NextRequest, { params } : { params: Promise<{ 
     const repartition = await db.repartition.findUnique({
       where: { id: id },
       include: {
-        equipments: { select: { id: true }, take: 1 },
+        equipment: { select: { id: true }, take: 1 },
       },
     });
     
@@ -153,7 +153,7 @@ export async function DELETE(req: NextRequest, { params } : { params: Promise<{ 
     }
     
     // Check if repartition has related equipment
-    if (repartition.equipments.length > 0) {
+    if (repartition.equipment.length > 0) {
       return NextResponse.json(
         { error: "Não é possível excluir a repartição porque existem equipamentos associados" },
         { status: 400 }
