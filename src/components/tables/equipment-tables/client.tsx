@@ -1,10 +1,45 @@
 // src/components/tables/equipment-tables/client.tsx
 "use client";
 
-import UserGroupGuard from "@/components/auth/user-group-guard";
-import TableFilter from "@/components/datatable/table-filter";
-import TableSortHeader from "@/components/datatable/table-sort-header";
-import EquipmentClientSkeleton from "@/components/skeletons/equipment-client-skeleton";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
+import {
+  BadgeAlertIcon,
+  BadgeCheckIcon,
+  Clock,
+  Columns,
+  Edit,
+  Eye,
+  FilterX,
+  Hospital,
+  Loader2,
+  MoreHorizontal,
+  Package,
+  PackagePlus,
+  RefreshCw,
+  Sheet,
+  Trash,
+  Trash2,
+  User,
+} from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import {
+  useRouter,
+  useSearchParams,
+} from 'next/navigation';
+import * as XLSX from 'xlsx';
+
+import UserGroupGuard from '@/components/auth/user-group-guard';
+import TableFilter from '@/components/datatable/table-filter';
+import TableSortHeader from '@/components/datatable/table-sort-header';
+import EquipmentClientSkeleton
+  from '@/components/skeletons/equipment-client-skeleton';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,9 +49,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -24,25 +59,32 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
+  Table as TableComponent,
   TableBody,
   TableCell,
-  Table as TableComponent,
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Equipment, FilterOptions, FiltersState } from "@/types/equipment";
-import { useMutation, useQuery } from "@tanstack/react-query";
+} from '@/components/ui/table';
+import {
+  Equipment,
+  FilterOptions,
+  FiltersState,
+} from '@/types/equipment';
+import {
+  useMutation,
+  useQuery,
+} from '@tanstack/react-query';
 import {
   ColumnDef,
   flexRender,
@@ -54,13 +96,7 @@ import {
   Table,
   useReactTable,
   VisibilityState,
-} from "@tanstack/react-table";
-import { BadgeAlertIcon, BadgeCheckIcon, Clock, Columns, Edit, Eye, FilterX, Hospital, Loader2, MoreHorizontal, Package, PackagePlus, RefreshCw, Sheet, Trash, Trash2, User } from "lucide-react";
-import { useSession } from "next-auth/react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import * as XLSX from "xlsx";
+} from '@tanstack/react-table';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
@@ -124,20 +160,37 @@ export function EquipmentClient() {
   });
 
   // Check permissions and group membership
-  const userGroups = session?.user?.groups || [];
-  const hasEquipmentReadPermission = userGroups.some(group => group.permissions.includes("equipment:read"));
-  const isAdmin = userGroups.some(group => group.name === "Admins");
+  const userGroups = useMemo(
+    () => session?.user?.groups || [],
+    [session?.user?.groups]
+  );
+  const hasEquipmentReadPermission = userGroups.some((group) =>
+    group.permissions.includes("equipment:read")
+  );
+  const isAdmin = userGroups.some((group) => group.name === "Admins");
 
   // Show registered_by column for admins
   useEffect(() => {
     if (isAdmin) {
-      setColumnVisibility(prev => ({ ...prev, registered_by: true }));
+      setColumnVisibility((prev) => ({ ...prev, registered_by: true }));
     }
   }, [isAdmin]);
 
   // Fetch equipment data
-  const { data: equipmentData, isLoading: isEquipmentLoading, error: equipmentError, refetch } = useQuery({
-    queryKey: ["equipment", pageIndex, pageSize, sorting, globalFilter, filters],
+  const {
+    data: equipmentData,
+    isLoading: isEquipmentLoading,
+    error: equipmentError,
+    refetch,
+  } = useQuery({
+    queryKey: [
+      "equipment",
+      pageIndex,
+      pageSize,
+      sorting,
+      globalFilter,
+      filters,
+    ],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: pageIndex.toString(),
@@ -147,9 +200,15 @@ export function EquipmentClient() {
         filter: globalFilter,
         ...(filters.type.length > 0 && { type: filters.type.join(",") }),
         ...(filters.status.length > 0 && { status: filters.status.join(",") }),
-        ...(filters.direction_id.length > 0 && { direction_id: filters.direction_id.join(",") }),
-        ...(filters.department_id.length > 0 && { department_id: filters.department_id.join(",") }),
-        ...(filters.registered_by.length > 0 && { registered_by: filters.registered_by.join(",") }),
+        ...(filters.direction_id.length > 0 && {
+          direction_id: filters.direction_id.join(","),
+        }),
+        ...(filters.department_id.length > 0 && {
+          department_id: filters.department_id.join(","),
+        }),
+        ...(filters.registered_by.length > 0 && {
+          registered_by: filters.registered_by.join(","),
+        }),
       });
       const response = await fetch(`/api/equipment?${params.toString()}`);
       if (!response.ok) {
@@ -162,7 +221,11 @@ export function EquipmentClient() {
   });
 
   // Fetch filter options
-  const { data: filterOptions, isLoading: isFilterLoading, error: filterError } = useQuery({
+  const {
+    data: filterOptions,
+    isLoading: isFilterLoading,
+    error: filterError,
+  } = useQuery({
     queryKey: ["filterOptions"],
     queryFn: async () => {
       const response = await fetch("/api/filter-options");
@@ -193,275 +256,369 @@ export function EquipmentClient() {
     },
   });
 
-  const columns = useMemo<ColumnDef<Equipment>[]>(
-    () => {
-      const baseColumns: ColumnDef<Equipment>[] = [
-        {
-          id: "select",
-          header: ({ table }: { table: Table<Equipment> }) => (
-            <Checkbox
-              checked={table.getIsAllPageRowsSelected()}
-              onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-              aria-label="Selecionar todos"
-            />
-          ),
-          cell: ({ row }: { row: Row<Equipment> }) => (
-            <Checkbox
-              checked={row.getIsSelected()}
-              onCheckedChange={(value) => row.toggleSelected(!!value)}
-              aria-label="Selecionar linha"
-            />
-          ),
-          enableSorting: false,
-          meta: { title: "Selecionar" } as ColumnMeta,
-        },
-        {
-          accessorFn: (row) => row.serial_number,
-          id: "serial_number",
-          header: () => (
-            <TableSortHeader
-              title="Número de Série"
-              sort={sorting[0]?.id === "serial_number" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-              onClick={() => {
-                setSorting([
-                  {
-                    id: "serial_number",
-                    desc: sorting[0]?.id === "serial_number" && !sorting[0]?.desc ? true : false,
-                  },
-                ]);
-                refetch();
-              }}
-            />
-          ),
-          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("serial_number") || "N/D",
-          meta: { title: "Número de Série" } as ColumnMeta,
-        },
-        {
-          accessorFn: (row) => row.type,
-          id: "type",
-          header: () => (
-            <TableSortHeader
-              title="Tipo"
-              sort={sorting[0]?.id === "type" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-              onClick={() => {
-                setSorting([
-                  {
-                    id: "type",
-                    desc: sorting[0]?.id === "type" && !sorting[0]?.desc ? true : false,
-                  },
-                ]);
-                refetch();
-              }}
-            />
-          ),
-          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("type"),
-          meta: { title: "Tipo" } as ColumnMeta,
-        },
-        {
-          accessorFn: (row) => row.brand,
-          id: "brand",
-          header: () => (
-            <TableSortHeader
-              title="Marca"
-              sort={sorting[0]?.id === "brand" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-              onClick={() => {
-                setSorting([
-                  {
-                    id: "brand",
-                    desc: sorting[0]?.id === "brand" && !sorting[0]?.desc ? true : false,
-                  },
-                ]);
-                refetch();
-              }}
-            />
-          ),
-          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("brand"),
-          meta: { title: "Marca" } as ColumnMeta,
-        },
-        {
-          accessorFn: (row) => row.model,
-          id: "model",
-          header: () => (
-            <TableSortHeader
-              title="Modelo"
-              sort={sorting[0]?.id === "model" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-              onClick={() => {
-                setSorting([
-                  {
-                    id: "model",
-                    desc: sorting[0]?.id === "model" && !sorting[0]?.desc ? true : false,
-                  },
-                ]);
-                refetch();
-              }}
-            />
-          ),
-          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("model"),
-          meta: { title: "Modelo" } as ColumnMeta,
-        },
-        {
-          accessorFn: (row) => row.status,
-          id: "status",
-          header: () => (
-            <TableSortHeader
-              title="Status"
-              sort={sorting[0]?.id === "status" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-              onClick={() => {
-                setSorting([
-                  {
-                    id: "status",
-                    desc: sorting[0]?.id === "status" && !sorting[0]?.desc ? true : false,
-                  },
-                ]);
-                refetch();
-              }}
-            />
-          ),
-          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("status"),
-          meta: { title: "Status" } as ColumnMeta,
-        },
-        {
-          accessorFn: (row) => row.direction?.name,
-          id: "direction",
-          header: () => (
-            <TableSortHeader
-              title="Direção"
-              sort={sorting[0]?.id === "direction" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-              onClick={() => {
-                setSorting([
-                  {
-                    id: "direction",
-                    desc: sorting[0]?.id === "direction" && !sorting[0]?.desc ? true : false,
-                  },
-                ]);
-                refetch();
-              }}
-            />
-          ),
-          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("direction") || "N/D",
-          meta: { title: "Direção" } as ColumnMeta,
-        },
-        {
-          accessorFn: (row) => row.department?.name,
-          id: "department",
-          header: () => (
-            <TableSortHeader
-              title="Departamento"
-              sort={sorting[0]?.id === "department" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-              onClick={() => {
-                setSorting([
-                  {
-                    id: "department",
-                    desc: sorting[0]?.id === "department" && !sorting[0]?.desc ? true : false,
-                  },
-                ]);
-                refetch();
-              }}
-            />
-          ),
-          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("department") || "N/D",
-          meta: { title: "Departamento" } as ColumnMeta,
-        },
-        {
-          accessorFn: (row) => row.registeredBy?.name,
-          id: "registered_by",
-          header: () => (
-            <TableSortHeader
-              title="Registrado Por"
-              sort={sorting[0]?.id === "registered_by" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-              onClick={() => {
-                setSorting([
-                  {
-                    id: "registered_by",
-                    desc: sorting[0]?.id === "registered_by" && !sorting[0]?.desc ? true : false,
-                  },
-                ]);
-                refetch();
-              }}
-            />
-          ),
-          cell: ({ row }: { row: Row<Equipment> }) => row.getValue("registered_by") || "N/D",
-          meta: { title: "Registrado Por" } as ColumnMeta,
-        },
-        {
-          accessorFn: (row) => row.created_at,
-          id: "created_at",
-          header: () => (
-            <TableSortHeader
-              title="Criado Em"
-              sort={sorting[0]?.id === "created_at" ? (sorting[0]?.desc ? "desc" : "asc") : null}
-              onClick={() => {
-                setSorting([
-                  {
-                    id: "created_at",
-                    desc: sorting[0]?.id === "created_at" && !sorting[0]?.desc ? true : false,
-                  },
-                ]);
-                refetch();
-              }}
-            />
-          ),
-          cell: ({ row }: { row: Row<Equipment> }) => new Date(row.getValue("created_at")).toLocaleDateString("pt-BR"),
-          meta: { title: "Criado Em" } as ColumnMeta,
-        },
-        {
-          id: "actions",
-          header: "",
-          cell: ({ row }: { row: Row<Equipment> }) => (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                <DropdownMenuItem className="flex flex-nowrap gap-2">
-                  <Eye />
-                  <Link href={`/equipments/${row.original.id}`}>Ver Detalhes</Link>
-                </DropdownMenuItem>
-                {/* Edit: Admins or user who registered */}
-                {(userGroups.some(group => group.name === "Admins") || 
-                  session?.user?.id === row.original.registeredBy?.id) && (
-                  <DropdownMenuItem>
-                    <Link href={`/equipments/update/${row.original.id}`} className="flex flex-nowrap gap-2">
-                      <Edit />
-                      <span>Editar</span>
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                {/* Delete: Admins only */}
-                <UserGroupGuard allowedGroups={["Admins"]}>
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setItemToDelete(row.original.id);
-                      setDeleteDialogOpen(true);
-                    }}
-                    className="text-red-600 flex flex-nowrap gap-2"
+  const columns = useMemo<ColumnDef<Equipment>[]>(() => {
+    const baseColumns: ColumnDef<Equipment>[] = [
+      {
+        id: "select",
+        header: ({ table }: { table: Table<Equipment> }) => (
+          <Checkbox
+            checked={table.getIsAllPageRowsSelected()}
+            onCheckedChange={(value) =>
+              table.toggleAllPageRowsSelected(!!value)
+            }
+            aria-label="Selecionar todos"
+          />
+        ),
+        cell: ({ row }: { row: Row<Equipment> }) => (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Selecionar linha"
+          />
+        ),
+        enableSorting: false,
+        meta: { title: "Selecionar" } as ColumnMeta,
+      },
+      {
+        accessorFn: (row) => row.serial_number,
+        id: "serial_number",
+        header: () => (
+          <TableSortHeader
+            title="Número de Série"
+            sort={
+              sorting[0]?.id === "serial_number"
+                ? sorting[0]?.desc
+                  ? "desc"
+                  : "asc"
+                : null
+            }
+            onClick={() => {
+              setSorting([
+                {
+                  id: "serial_number",
+                  desc:
+                    sorting[0]?.id === "serial_number" && !sorting[0]?.desc
+                      ? true
+                      : false,
+                },
+              ]);
+              refetch();
+            }}
+          />
+        ),
+        cell: ({ row }: { row: Row<Equipment> }) =>
+          row.getValue("serial_number") || "N/D",
+        meta: { title: "Número de Série" } as ColumnMeta,
+      },
+      {
+        accessorFn: (row) => row.type,
+        id: "type",
+        header: () => (
+          <TableSortHeader
+            title="Tipo"
+            sort={
+              sorting[0]?.id === "type"
+                ? sorting[0]?.desc
+                  ? "desc"
+                  : "asc"
+                : null
+            }
+            onClick={() => {
+              setSorting([
+                {
+                  id: "type",
+                  desc:
+                    sorting[0]?.id === "type" && !sorting[0]?.desc
+                      ? true
+                      : false,
+                },
+              ]);
+              refetch();
+            }}
+          />
+        ),
+        cell: ({ row }: { row: Row<Equipment> }) => row.getValue("type"),
+        meta: { title: "Tipo" } as ColumnMeta,
+      },
+      {
+        accessorFn: (row) => row.brand,
+        id: "brand",
+        header: () => (
+          <TableSortHeader
+            title="Marca"
+            sort={
+              sorting[0]?.id === "brand"
+                ? sorting[0]?.desc
+                  ? "desc"
+                  : "asc"
+                : null
+            }
+            onClick={() => {
+              setSorting([
+                {
+                  id: "brand",
+                  desc:
+                    sorting[0]?.id === "brand" && !sorting[0]?.desc
+                      ? true
+                      : false,
+                },
+              ]);
+              refetch();
+            }}
+          />
+        ),
+        cell: ({ row }: { row: Row<Equipment> }) => row.getValue("brand"),
+        meta: { title: "Marca" } as ColumnMeta,
+      },
+      {
+        accessorFn: (row) => row.model,
+        id: "model",
+        header: () => (
+          <TableSortHeader
+            title="Modelo"
+            sort={
+              sorting[0]?.id === "model"
+                ? sorting[0]?.desc
+                  ? "desc"
+                  : "asc"
+                : null
+            }
+            onClick={() => {
+              setSorting([
+                {
+                  id: "model",
+                  desc:
+                    sorting[0]?.id === "model" && !sorting[0]?.desc
+                      ? true
+                      : false,
+                },
+              ]);
+              refetch();
+            }}
+          />
+        ),
+        cell: ({ row }: { row: Row<Equipment> }) => row.getValue("model"),
+        meta: { title: "Modelo" } as ColumnMeta,
+      },
+      {
+        accessorFn: (row) => row.status,
+        id: "status",
+        header: () => (
+          <TableSortHeader
+            title="Status"
+            sort={
+              sorting[0]?.id === "status"
+                ? sorting[0]?.desc
+                  ? "desc"
+                  : "asc"
+                : null
+            }
+            onClick={() => {
+              setSorting([
+                {
+                  id: "status",
+                  desc:
+                    sorting[0]?.id === "status" && !sorting[0]?.desc
+                      ? true
+                      : false,
+                },
+              ]);
+              refetch();
+            }}
+          />
+        ),
+        cell: ({ row }: { row: Row<Equipment> }) => row.getValue("status"),
+        meta: { title: "Status" } as ColumnMeta,
+      },
+      {
+        accessorFn: (row) => row.direction?.name,
+        id: "direction",
+        header: () => (
+          <TableSortHeader
+            title="Direção"
+            sort={
+              sorting[0]?.id === "direction"
+                ? sorting[0]?.desc
+                  ? "desc"
+                  : "asc"
+                : null
+            }
+            onClick={() => {
+              setSorting([
+                {
+                  id: "direction",
+                  desc:
+                    sorting[0]?.id === "direction" && !sorting[0]?.desc
+                      ? true
+                      : false,
+                },
+              ]);
+              refetch();
+            }}
+          />
+        ),
+        cell: ({ row }: { row: Row<Equipment> }) =>
+          row.getValue("direction") || "N/D",
+        meta: { title: "Direção" } as ColumnMeta,
+      },
+      {
+        accessorFn: (row) => row.department?.name,
+        id: "department",
+        header: () => (
+          <TableSortHeader
+            title="Departamento"
+            sort={
+              sorting[0]?.id === "department"
+                ? sorting[0]?.desc
+                  ? "desc"
+                  : "asc"
+                : null
+            }
+            onClick={() => {
+              setSorting([
+                {
+                  id: "department",
+                  desc:
+                    sorting[0]?.id === "department" && !sorting[0]?.desc
+                      ? true
+                      : false,
+                },
+              ]);
+              refetch();
+            }}
+          />
+        ),
+        cell: ({ row }: { row: Row<Equipment> }) =>
+          row.getValue("department") || "N/D",
+        meta: { title: "Departamento" } as ColumnMeta,
+      },
+      {
+        accessorFn: (row) => row.registeredBy?.name,
+        id: "registered_by",
+        header: () => (
+          <TableSortHeader
+            title="Registrado Por"
+            sort={
+              sorting[0]?.id === "registered_by"
+                ? sorting[0]?.desc
+                  ? "desc"
+                  : "asc"
+                : null
+            }
+            onClick={() => {
+              setSorting([
+                {
+                  id: "registered_by",
+                  desc:
+                    sorting[0]?.id === "registered_by" && !sorting[0]?.desc
+                      ? true
+                      : false,
+                },
+              ]);
+              refetch();
+            }}
+          />
+        ),
+        cell: ({ row }: { row: Row<Equipment> }) =>
+          row.getValue("registered_by") || "N/D",
+        meta: { title: "Registrado Por" } as ColumnMeta,
+      },
+      {
+        accessorFn: (row) => row.created_at,
+        id: "created_at",
+        header: () => (
+          <TableSortHeader
+            title="Criado Em"
+            sort={
+              sorting[0]?.id === "created_at"
+                ? sorting[0]?.desc
+                  ? "desc"
+                  : "asc"
+                : null
+            }
+            onClick={() => {
+              setSorting([
+                {
+                  id: "created_at",
+                  desc:
+                    sorting[0]?.id === "created_at" && !sorting[0]?.desc
+                      ? true
+                      : false,
+                },
+              ]);
+              refetch();
+            }}
+          />
+        ),
+        cell: ({ row }: { row: Row<Equipment> }) =>
+          new Date(row.getValue("created_at")).toLocaleDateString("pt-BR"),
+        meta: { title: "Criado Em" } as ColumnMeta,
+      },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }: { row: Row<Equipment> }) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Ações</DropdownMenuLabel>
+              <DropdownMenuItem className="flex flex-nowrap gap-2">
+                <Eye />
+                <Link href={`/equipments/${row.original.id}`}>
+                  Ver Detalhes
+                </Link>
+              </DropdownMenuItem>
+              {/* Edit: Admins or user who registered */}
+              {(userGroups.some((group) => group.name === "Admins") ||
+                session?.user?.id === row.original.registeredBy?.id) && (
+                <DropdownMenuItem>
+                  <Link
+                    href={`/equipments/update/${row.original.id}`}
+                    className="flex flex-nowrap gap-2"
                   >
-                    <Trash />
-                    <span>Excluir</span>
-                  </DropdownMenuItem>
-                </UserGroupGuard>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ),
-          meta: { title: "Ações" } as ColumnMeta,
-        },
-      ];
+                    <Edit />
+                    <span>Editar</span>
+                  </Link>
+                </DropdownMenuItem>
+              )}
+              {/* Delete: Admins only */}
+              <UserGroupGuard allowedGroups={["Admins"]}>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setItemToDelete(row.original.id);
+                    setDeleteDialogOpen(true);
+                  }}
+                  className="text-red-600 flex flex-nowrap gap-2"
+                >
+                  <Trash />
+                  <span>Excluir</span>
+                </DropdownMenuItem>
+              </UserGroupGuard>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
+        meta: { title: "Ações" } as ColumnMeta,
+      },
+    ];
 
-      return baseColumns;
-    },
-    [refetch, sorting, session?.user?.id, userGroups]
+    return baseColumns;
+  }, [refetch, sorting, session?.user?.id, userGroups]);
+
+  const equipmentTypeOptions: FilterOption[] = (filterOptions?.types || []).map(
+    (type) => ({
+      value: type,
+      label: type,
+      icon: ({ className }) => <Package className={className} />,
+    })
   );
 
-  const equipmentTypeOptions: FilterOption[] = (filterOptions?.types || []).map((type) => ({
-    value: type,
-    label: type,
-    icon: ({ className }) => <Package className={className} />,
-  }));
-
-  const equipmentStatusOptions: FilterOption[] = (filterOptions?.statuses || []).map((status) => ({
+  const equipmentStatusOptions: FilterOption[] = (
+    filterOptions?.statuses || []
+  ).map((status) => ({
     value: status,
     label: status,
     icon: ({ className }) => {
@@ -478,7 +635,9 @@ export function EquipmentClient() {
     },
   }));
 
-  const directionOptions: FilterOption[] = (filterOptions?.directions || []).map((direction) => ({
+  const directionOptions: FilterOption[] = (
+    filterOptions?.directions || []
+  ).map((direction) => ({
     value: direction.id,
     label: direction.name,
     icon: ({ className }) => <Hospital className={className} />,
@@ -496,11 +655,13 @@ export function EquipmentClient() {
       icon: ({ className }) => <Hospital className={className} />,
     }));
 
-  const registeredByOptions: FilterOption[] = (filterOptions?.users || []).map((user) => ({
-    value: user.id,
-    label: user.name || "Sem Nome",
-    icon: ({ className }) => <User className={className} />,
-  }));
+  const registeredByOptions: FilterOption[] = (filterOptions?.users || []).map(
+    (user) => ({
+      value: user.id,
+      label: user.name || "Sem Nome",
+      icon: ({ className }) => <User className={className} />,
+    })
+  );
 
   const table = useReactTable({
     data: equipmentData?.data || [],
@@ -532,10 +693,14 @@ export function EquipmentClient() {
     params.set("sortDirection", sorting[0]?.desc ? "desc" : "asc");
     if (globalFilter) params.set("search", globalFilter);
     if (filters.type.length > 0) params.set("type", filters.type.join(","));
-    if (filters.status.length > 0) params.set("status", filters.status.join(","));
-    if (filters.direction_id.length > 0) params.set("direction", filters.direction_id.join(","));
-    if (filters.department_id.length > 0) params.set("department", filters.department_id.join(","));
-    if (filters.registered_by.length > 0) params.set("registered_by", filters.registered_by.join(","));
+    if (filters.status.length > 0)
+      params.set("status", filters.status.join(","));
+    if (filters.direction_id.length > 0)
+      params.set("direction", filters.direction_id.join(","));
+    if (filters.department_id.length > 0)
+      params.set("department", filters.department_id.join(","));
+    if (filters.registered_by.length > 0)
+      params.set("registered_by", filters.registered_by.join(","));
 
     router.push(`?${params.toString()}`, { scroll: false });
   }, [pageIndex, pageSize, sorting, globalFilter, filters, router]);
@@ -567,23 +732,32 @@ export function EquipmentClient() {
   const exportToExcel = useCallback(() => {
     const exportData = table.getFilteredRowModel().rows.map((row) => {
       const rowData: { [key: string]: any } = {};
-      if (columnVisibility["serial_number"]) rowData["Número de Série"] = row.original.serial_number || "N/D";
+      if (columnVisibility["serial_number"])
+        rowData["Número de Série"] = row.original.serial_number || "N/D";
       if (columnVisibility["type"]) rowData["Tipo"] = row.original.type;
       if (columnVisibility["brand"]) rowData["Marca"] = row.original.brand;
       if (columnVisibility["model"]) rowData["Modelo"] = row.original.model;
       if (columnVisibility["status"]) rowData["Status"] = row.original.status;
-      if (columnVisibility["direction"]) rowData["Direção"] = row.original.direction?.name || "N/D";
-      if (columnVisibility["department"]) rowData["Departamento"] = row.original.department?.name || "N/D";
-      if (columnVisibility["registered_by"] && isAdmin) rowData["Registrado Por"] = row.original.registeredBy?.name || "N/D";
+      if (columnVisibility["direction"])
+        rowData["Direção"] = row.original.direction?.name || "N/D";
+      if (columnVisibility["department"])
+        rowData["Departamento"] = row.original.department?.name || "N/D";
+      if (columnVisibility["registered_by"] && isAdmin)
+        rowData["Registrado Por"] = row.original.registeredBy?.name || "N/D";
       if (columnVisibility["created_at"])
-        rowData["Criado Em"] = new Date(row.original.created_at).toLocaleDateString("pt-BR");
+        rowData["Criado Em"] = new Date(
+          row.original.created_at
+        ).toLocaleDateString("pt-BR");
       return rowData;
     });
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Equipamentos");
-    XLSX.writeFile(workbook, `exportacao_equipamentos_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `exportacao_equipamentos_${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
   }, [table, columnVisibility, isAdmin]);
 
   if (status === "loading" || isEquipmentLoading || isFilterLoading) {
@@ -682,12 +856,17 @@ export function EquipmentClient() {
                 checked={column.getIsVisible()}
                 onCheckedChange={(value) => column.toggleVisibility(!!value)}
               >
-                {(column.columnDef.meta as ColumnMeta | undefined)?.title || column.id}
+                {(column.columnDef.meta as ColumnMeta | undefined)?.title ||
+                  column.id}
               </DropdownMenuCheckboxItem>
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button onClick={exportToExcel} variant="outline" className="flex flex-nowrap gap-2">
+        <Button
+          onClick={exportToExcel}
+          variant="outline"
+          className="flex flex-nowrap gap-2"
+        >
           <Sheet />
           <span>Exportar para Excel</span>
         </Button>
@@ -754,7 +933,8 @@ export function EquipmentClient() {
             setFilters((prev) => ({
               ...prev,
               direction_id: directionFilters,
-              department_id: directionFilters.length === 0 ? [] : prev.department_id,
+              department_id:
+                directionFilters.length === 0 ? [] : prev.department_id,
             }));
             setPageIndex(0);
             refetch();
@@ -774,7 +954,10 @@ export function EquipmentClient() {
             const departmentFilters = newParams.filters
               .filter((f) => f.startsWith("department_id:"))
               .map((f) => f.split(":")[1]);
-            setFilters((prev) => ({ ...prev, department_id: departmentFilters }));
+            setFilters((prev) => ({
+              ...prev,
+              department_id: departmentFilters,
+            }));
             setPageIndex(0);
             refetch();
           }}
@@ -794,7 +977,10 @@ export function EquipmentClient() {
               const registeredByFilters = newParams.filters
                 .filter((f) => f.startsWith("registered_by:"))
                 .map((f) => f.split(":")[1]);
-              setFilters((prev) => ({ ...prev, registered_by: registeredByFilters }));
+              setFilters((prev) => ({
+                ...prev,
+                registered_by: registeredByFilters,
+              }));
               setPageIndex(0);
               refetch();
             }}
@@ -820,7 +1006,10 @@ export function EquipmentClient() {
                 <TableRow key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <TableHead key={header.id} className="whitespace-nowrap">
-                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -829,17 +1018,27 @@ export function EquipmentClient() {
             <TableBody>
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} data-state={row.getIsSelected() && "selected"} className="cursor-pointer">
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className="cursor-pointer"
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="whitespace-nowrap">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
                       </TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
                     Nenhum resultado encontrado.
                   </TableCell>
                 </TableRow>
@@ -876,7 +1075,8 @@ export function EquipmentClient() {
           <span className="flex items-center gap-1">
             <div>Página</div>
             <strong>
-              {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
+              {table.getState().pagination.pageIndex + 1} de{" "}
+              {table.getPageCount()}
             </strong>
           </span>
           <Select
@@ -905,7 +1105,11 @@ export function EquipmentClient() {
             {table.getFilteredRowModel().rows.length}
           </span>
           {Object.keys(rowSelection).length > 0 && (
-            <Button variant="ghost" size="sm" onClick={() => setRowSelection({})}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setRowSelection({})}
+            >
               <span>Limpar seleção</span>
             </Button>
           )}
@@ -919,7 +1123,9 @@ export function EquipmentClient() {
             <AlertDialogDescription>
               {itemToDelete
                 ? "Tem certeza de que deseja excluir este equipamento? Esta ação não pode ser desfeita."
-                : `Tem certeza de que deseja excluir ${Object.keys(rowSelection).length} itens selecionados? Esta ação não pode ser desfeita.`}
+                : `Tem certeza de que deseja excluir ${
+                    Object.keys(rowSelection).length
+                  } itens selecionados? Esta ação não pode ser desfeita.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
