@@ -220,7 +220,7 @@ export default function DashboardHomePage() {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-sm font-medium">
-                      Equipamentos Registados
+                      Seus Registos de Equipamentos
                     </CardTitle>
                     <Package className="h-4 w-4 text-muted-foreground" />
                   </CardHeader>
