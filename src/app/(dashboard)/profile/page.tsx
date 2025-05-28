@@ -1,9 +1,52 @@
 "use client";
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import type { FormEvent } from 'react';
+import { useState } from 'react';
+
+import {
+  AlertCircle,
+  BarChart,
+  BarChart2,
+  CalendarIcon,
+  HardDrive,
+  Mail,
+  MapPin,
+  Shield,
+  UserIcon,
+} from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import {
+  Bar,
+  BarChart as ReBarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart as RePieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/components/ui/alert';
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -11,21 +54,26 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { getInitials } from "@/lib/utils";
-import { SafeUserType } from "@/types";
-import { PersonIcon } from "@radix-ui/react-icons";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertCircle, Mail, Shield, UserIcon } from "lucide-react";
-import { useSession } from "next-auth/react";
-import type { FormEvent } from "react";
-import { useState } from "react";
-import ProfileSkeleton from "./loading";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { getInitials } from '@/lib/utils';
+import { SafeUserType } from '@/types';
+import { PersonIcon } from '@radix-ui/react-icons';
+import {
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
+
+import ProfileSkeleton from './loading';
 
 // Types for form data
 type PasswordFormData = {
@@ -37,6 +85,26 @@ type PasswordFormData = {
 type ProfileFormData = {
   name: string;
 };
+
+// Update the interface to include detailed records
+interface UserActivityStats {
+  totalEquipmentRegistered: number;
+  equipmentByType: Array<{type: string, count: number}>;
+  equipmentByLocation: Array<{location: string, count: number}>;
+  equipmentByMonth: Array<{month: string, count: number}>;
+  equipmentByYear: Array<{year: string, count: number}>;
+  // Add detailed records
+  equipmentDetails: Array<{
+    id: string;
+    type: string;
+    brand: string;
+    model: string;
+    serial_number: string;
+    location: string;
+    department_name: string;
+    created_at: string;
+  }>;
+}
 
 const ProfileOverview = ({ user }: { user: SafeUserType }) => (
   <div className="space-y-6">
@@ -248,6 +316,346 @@ const ProfileUpdateModal: React.FC<{ user: SafeUserType; }> = ({ user }) => {
   );
 };
 
+const UserActivity: React.FC<{ userId: string | undefined }> = ({ userId }) => {
+  // Fetch user activity statistics
+  const { data, isLoading, error } = useQuery<UserActivityStats>({
+    queryKey: ["user-activity", userId],
+    queryFn: async () => {
+      const response = await fetch(`/api/users/${userId}/activity`);
+      if (!response.ok) throw new Error("Failed to fetch user activity");
+      return response.json();
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="animate-pulse bg-muted h-6 w-48 rounded" />
+          </CardHeader>
+          <CardContent>
+            <div className="h-64 animate-pulse bg-muted rounded" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Erro</AlertTitle>
+        <AlertDescription>Falha ao carregar dados da sua actividade.</AlertDescription>
+      </Alert>
+    );
+  }
+
+  // Define colors for charts
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-medium">Total Registados</CardTitle>
+            <HardDrive className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.totalEquipmentRegistered}</div>
+            <p className="text-xs text-muted-foreground">
+              Equipamentos registados por si
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-medium">Tipos Diferentes</CardTitle>
+            <BarChart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.equipmentByType.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Categorias de equipamentos
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardTitle className="text-sm font-medium">Localizações</CardTitle>
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.equipmentByLocation.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Departamentos/Sectores diferentes
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Equipment by Type Chart */}
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle>Equipamentos por Tipo</CardTitle>
+            <CardDescription>Distribuição dos diferentes tipos de equipamentos registados</CardDescription>
+          </CardHeader>
+          <CardContent className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <RePieChart>
+                <Pie
+                  data={data.equipmentByType}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={true}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="count"
+                  nameKey="type"
+                  label={({ type, percent }) => `${type}: ${(percent * 100).toFixed(0)}%`}
+                >
+                  {data.equipmentByType.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => [`${value} equipamentos`, 'Quantidade']} />
+              </RePieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Equipment by Location Chart */}
+        <Card className="col-span-1">
+          <CardHeader>
+            <CardTitle>Equipamentos por Localização</CardTitle>
+            <CardDescription>Distribuição dos equipamentos por departamento</CardDescription>
+          </CardHeader>
+          <CardContent className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <ReBarChart data={data.equipmentByLocation}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="location" />
+                <YAxis />
+                <Tooltip formatter={(value) => [`${value} equipamentos`, 'Quantidade']} />
+                <Bar dataKey="count" fill="#8884d8" name="Equipamentos">
+                  {data.equipmentByLocation.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Bar>
+              </ReBarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Equipment Registration Timeline */}
+        <Card className="col-span-1 md:col-span-2">
+          <CardHeader>
+            <CardTitle>Histórico de Registos</CardTitle>
+            <CardDescription>Quantidade de equipamentos registados por mês</CardDescription>
+          </CardHeader>
+          <CardContent className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <ReBarChart data={data.equipmentByMonth}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip formatter={(value) => [`${value} equipamentos`, 'Quantidade']} />
+                <Bar dataKey="count" fill="#0088FE" name="Equipamentos" />
+              </ReBarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      
+
+      {/* Detailed Records Section */}
+      <Card className="col-span-1 md:col-span-2">
+        <CardHeader>
+          <CardTitle>Equipamentos Registados - Detalhes</CardTitle>
+          <CardDescription>Lista dos equipamentos registados por si</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="by-type" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="by-type">Por Tipo</TabsTrigger>
+              <TabsTrigger value="by-location">Por Localização</TabsTrigger>
+              <TabsTrigger value="by-date">Cronologia</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="by-type">
+              {data.equipmentByType.length > 0 ? (
+                <div className="space-y-4">
+                  {data.equipmentByType.map(typeGroup => (
+                    <div key={typeGroup.type} className="border rounded-lg p-4">
+                      <h3 className="font-medium flex items-center gap-2">
+                        <BarChart className="h-4 w-4" />
+                        {typeGroup.type} ({typeGroup.count})
+                      </h3>
+                      <Separator className="my-2" />
+                      <div className="overflow-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="text-sm text-muted-foreground">
+                              <th className="text-left p-2">Modelo</th>
+                              <th className="text-left p-2">Nº Série</th>
+                              <th className="text-left p-2">Departamento</th>
+                              <th className="text-left p-2">Data Registo</th>
+                              <th className="text-left p-2"></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {data.equipmentDetails
+                              .filter(item => item.type === typeGroup.type)
+                              .map(item => (
+                                <tr key={item.id}>
+                                  <td className="p-2">{item.brand} {item.model}</td>
+                                  <td className="p-2">{item.serial_number || "N/A"}</td>
+                                  <td className="p-2">{item.department_name || "N/A"}</td>
+                                  <td className="p-2">{new Date(item.created_at).toLocaleDateString()}</td>
+                                  <td className="p-2">
+                                    <Button variant="link" asChild size="sm">
+                                      <Link href={`/equipments/${item.id}`}>Ver</Link>
+                                    </Button>
+                                  </td>
+                                </tr>
+                              ))
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center p-6 text-muted-foreground">
+                  Nenhum equipamento registado
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="by-location">
+              {data.equipmentByLocation.length > 0 ? (
+                <div className="space-y-4">
+                  {data.equipmentByLocation.map(locGroup => (
+                    <div key={locGroup.location} className="border rounded-lg p-4">
+                      <h3 className="font-medium flex items-center gap-2">
+                        <MapPin className="h-4 w-4" />
+                        {locGroup.location} ({locGroup.count})
+                      </h3>
+                      <Separator className="my-2" />
+                      <div className="overflow-auto">
+                        <table className="w-full">
+                          <thead>
+                            <tr className="text-sm text-muted-foreground">
+                              <th className="text-left p-2">Tipo</th>
+                              <th className="text-left p-2">Modelo</th>
+                              <th className="text-left p-2">Nº Série</th>
+                              <th className="text-left p-2">Data Registo</th>
+                              <th className="text-left p-2"></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {data.equipmentDetails
+                              .filter(item => item.location === locGroup.location)
+                              .map(item => (
+                                <tr key={item.id}>
+                                  <td className="p-2">{item.type}</td>
+                                  <td className="p-2">{item.brand} {item.model}</td>
+                                  <td className="p-2">{item.serial_number || "N/A"}</td>
+                                  <td className="p-2">{new Date(item.created_at).toLocaleDateString()}</td>
+                                  <td className="p-2">
+                                    <Button variant="link" asChild size="sm">
+                                      <Link href={`/equipments/${item.id}`}>Ver</Link>
+                                    </Button>
+                                  </td>
+                                </tr>
+                              ))
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center p-6 text-muted-foreground">
+                  Nenhum equipamento registado
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="by-date">
+              <div className="space-y-4">
+                {data.equipmentByMonth.length > 0 ? (
+                  data.equipmentByMonth.map(monthGroup => {
+                    // Filter equipment created in this month/year
+                    const [month, year] = monthGroup.month.split(' ');
+                    const equipmentInMonth = data.equipmentDetails.filter(item => {
+                      const date = new Date(item.created_at);
+                      const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                      return monthNames[date.getMonth()] === month && date.getFullYear().toString() === year;
+                    });
+                    
+                    return (
+                      <div key={monthGroup.month} className="border rounded-lg p-4">
+                        <h3 className="font-medium flex items-center gap-2">
+                          <CalendarIcon className="h-4 w-4" />
+                          {monthGroup.month} ({monthGroup.count})
+                        </h3>
+                        <Separator className="my-2" />
+                        <div className="overflow-auto">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="text-sm text-muted-foreground">
+                                <th className="text-left p-2">Tipo</th>
+                                <th className="text-left p-2">Modelo</th>
+                                <th className="text-left p-2">Nº Série</th>
+                                <th className="text-left p-2">Departamento</th>
+                                <th className="text-left p-2"></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {equipmentInMonth.map(item => (
+                                <tr key={item.id}>
+                                  <td className="p-2">{item.type}</td>
+                                  <td className="p-2">{item.brand} {item.model}</td>
+                                  <td className="p-2">{item.serial_number || "N/A"}</td>
+                                  <td className="p-2">{item.department_name || "N/A"}</td>
+                                  <td className="p-2">
+                                    <Button variant="link" asChild size="sm">
+                                      <Link href={`/equipments/${item.id}`}>Ver</Link>
+                                    </Button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="text-center p-6 text-muted-foreground">
+                    Nenhum equipamento registado
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 const ProfilePage = () => {
   const { data: session, status } = useSession();
   // Fetch filter options
@@ -308,6 +716,10 @@ const ProfilePage = () => {
             <UserIcon className="h-4 w-4" />
             Visão geral
           </TabsTrigger>
+          <TabsTrigger value="activity" className="flex items-center gap-2">
+            <BarChart2 className="h-4 w-4" />
+            A sua Actividade
+          </TabsTrigger>
           <TabsTrigger value="security" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
             Segurança
@@ -321,6 +733,16 @@ const ProfilePage = () => {
             </AlertDescription>
           </Alert>
           <ProfileOverview user={data?.user as SafeUserType} />
+        </TabsContent>
+
+        <TabsContent value="activity" className="space-y-4">
+          <Alert>
+            <CalendarIcon className="h-4 w-4" />
+            <AlertDescription>
+              Estatísticas baseadas em dados desde {new Date(data?.user?.created_at || Date.now()).toLocaleDateString()}
+            </AlertDescription>
+          </Alert>
+          <UserActivity userId={data?.user?.id as string} />
         </TabsContent>
 
         <TabsContent value="security" className="space-y-4">
@@ -344,6 +766,8 @@ const ProfilePage = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      
     </div>
   );
 };
