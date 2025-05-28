@@ -1,44 +1,11 @@
 // src/components/forms/equipment-form.tsx
 "use client";
 
-import { Button } from "@/components/ui/button";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-import { equipment_schema } from "@/schemas/equipment";
-import { EquipmentFormData, KeyValuePair, statusOptions, typeOptions } from "@/types/equipment";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Department, Direction, Repartition, Sector, Service } from "@prisma/client";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+  useEffect,
+  useState,
+} from 'react';
+
 import {
   AlertCircle,
   Calendar,
@@ -55,12 +22,69 @@ import {
   Trash2,
   Upload,
   Wrench,
-} from "lucide-react";
-import Image from "next/image";
-import { useRouter } from "nextjs-toploader/app";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+} from 'lucide-react';
+import Image from 'next/image';
+import { useRouter } from 'nextjs-toploader/app';
+import { useForm } from 'react-hook-form';
 
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+import { equipment_schema } from '@/schemas/equipment';
+import {
+  EquipmentFormData,
+  KeyValuePair,
+  statusOptions,
+  typeOptions,
+} from '@/types/equipment';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  Department,
+  Direction,
+  Repartition,
+  Sector,
+  Service,
+} from '@prisma/client';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 
 export function EquipmentForm() {
   const queryClient = useQueryClient();
@@ -152,11 +176,14 @@ export function EquipmentForm() {
         method: "POST",
         body: formData,
       });
+      
+      const data = await response.json();
+      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to create equipment");
+        throw new Error(data.error || "Falha ao criar equipamento.");
       }
-      return response.json();
+      
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["equipment"] });
@@ -170,7 +197,23 @@ export function EquipmentForm() {
       router.push("/equipments");
     },
     onError: (error: Error) => {
-      form.setError("root", { message: error.message });
+      // Try to parse the error response to check for field-specific errors
+      try {
+        const errorData = JSON.parse(error.message);
+        if (errorData.field && form.getFieldState(errorData.field)) {
+          // Set error on the specific field if it exists
+          form.setError(errorData.field as any, {
+            type: "manual",
+            message: errorData.error || "Erro de validação"
+          });
+        } else {
+          // Fallback to root error
+          form.setError("root", { message: errorData.error || error.message });
+        }
+      } catch (e) {
+        // If we can't parse it as JSON, just set it as a root error
+        form.setError("root", { message: error.message });
+      }
     },
   });
 
@@ -268,6 +311,28 @@ export function EquipmentForm() {
     <TooltipProvider>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(on_submit)} className="space-y-8">
+          {/* Error Alert */}
+          {form.formState.errors.root && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Erro no Cadastro</AlertTitle>
+              <AlertDescription>
+                {form.formState.errors.root.message}
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {/* Serial number error highlight */}
+          {form.formState.errors.serial_number?.message === "Este equipamento já foi registado no sistema. Por favor, verifique e tente novamente." && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Número de Série Duplicado</AlertTitle>
+              <AlertDescription>
+                Este número de série já está registrado no sistema. Por favor, verifique se o equipamento já foi cadastrado anteriormente.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4">
             <FormField
               control={form.control}
@@ -1055,12 +1120,6 @@ export function EquipmentForm() {
             />
           </div>
 
-          {form.formState.errors.root && (
-            <p className="text-red-500 flex items-center gap-2">
-              <AlertCircle className="h-4 w-4" />
-              {form.formState.errors.root.message}
-            </p>
-          )}
           <div className="flex justify-end">
             <Button type="submit" disabled={mutation.isPending}>
               {mutation.isPending ? (

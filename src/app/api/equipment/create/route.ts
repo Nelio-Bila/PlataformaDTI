@@ -1,10 +1,11 @@
 // src/app/api/equipment/create/route.ts
-import { auth } from "@/auth";
-import { db } from "@/lib/db";
-import { Prisma } from "@prisma/client";
-import { v2 as cloudinary } from "cloudinary";
-import { NextResponse } from "next/server";
-import { z } from "zod";
+import { v2 as cloudinary } from 'cloudinary';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+
+import { auth } from '@/auth';
+import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 
 const equipment_schema = z.object({
   serial_number: z.string().min(1, { message: "Número de série é obrigatório" }),
@@ -68,6 +69,30 @@ export async function POST(req: Request) {
     };
 
     const validatedData = equipment_schema.parse(data);
+
+    // Add case-insensitive check for duplicate serial number
+    if (validatedData.serial_number) {
+      const existingEquipment = await db.equipment.findFirst({
+        where: {
+          serial_number: {
+            mode: 'insensitive', 
+            equals: validatedData.serial_number
+          }
+        }
+      });
+
+      if (existingEquipment) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Este equipamento já foi registado no sistema. Por favor, verifique e tente novamente.",
+            field: "serial_number"
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     const imageFiles = formData.getAll("images") as File[];
 
     let uploadedImages: { url: string; public_id: string }[] = [];
@@ -105,9 +130,10 @@ export async function POST(req: Request) {
       uploadedImages = await Promise.all(uploadPromises);
     }
 
+    // Creating the equipment
     const equipment = await db.equipment.create({
       data: {
-        serial_number: validatedData.serial_number,
+        serial_number: validatedData.serial_number.toUpperCase(),
         type: validatedData.type,
         brand: validatedData.brand,
         model: validatedData.model,
@@ -143,13 +169,67 @@ export async function POST(req: Request) {
     }
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       console.error("Prisma error:", error.message, error.code, error.meta);
-      if (error.code === "P2003") {
+      
+      // P2002 error handling 
+      if (error.code === "P2002" && error.meta?.target && Array.isArray(error.meta?.target) && 
+          error.meta.target.includes("serial_number")) {
         return NextResponse.json(
-          { success: false, error: "Violação de chave estrangeira: Utilizador ou outro registro não encontrado." },
+          { 
+            success: false, 
+            error: "Este equipamento já foi registado no sistema. Por favor, verifique e tente novamente.",
+            field: "serial_number"
+          }, 
+          { status: 409 }
+        );
+      }
+      
+      // Foreign key constraint violation
+      if (error.code === "P2003") {
+        // Find which relation has the issue
+        const field = typeof error.meta?.field === 'string' 
+          ? error.meta.field.split('_').slice(-1)[0]
+          : null;
+          
+        let errorMessage = "Violação de chave estrangeira: ";
+        
+        switch (field) {
+          case "direction":
+            errorMessage += "A direção selecionada não existe.";
+            break;
+          case "department":
+            errorMessage += "O departamento selecionado não existe.";
+            break;
+          case "sector":
+            errorMessage += "O sector selecionado não existe.";
+            break;
+          case "service":
+            errorMessage += "O serviço selecionado não existe.";
+            break;
+          case "repartition":
+            errorMessage += "A repartição selecionada não existe.";
+            break;
+          default:
+            errorMessage += "Um dos itens selecionados não foi encontrado.";
+        }
+        
+        return NextResponse.json(
+          { success: false, error: errorMessage, field: field ? `${field}_id` : null },
           { status: 400 }
         );
       }
-      return NextResponse.json({ success: false, error: "Erro no banco de dados." }, { status: 500 });
+      
+      // Missing required field
+      if (error.code === "P2004") {
+        return NextResponse.json(
+          { success: false, error: "Um campo obrigatório está faltando." },
+          { status: 400 }
+        );
+      }
+      
+      return NextResponse.json(
+        { success: false, error: "Erro no banco de dados. Por favor, tente novamente." },
+        { status: 500 }
+      );
     }
     console.error("Error creating equipment:", error instanceof Error ? error.message : "Unknown error");
     return NextResponse.json({ success: false, error: "Falha ao criar equipamento." }, { status: 500 });
