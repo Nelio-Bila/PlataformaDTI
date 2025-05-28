@@ -210,7 +210,7 @@ export function EquipmentForm() {
           // Fallback to root error
           form.setError("root", { message: errorData.error || error.message });
         }
-      } catch (e) {
+      } catch {
         // If we can't parse it as JSON, just set it as a root error
         form.setError("root", { message: error.message });
       }
