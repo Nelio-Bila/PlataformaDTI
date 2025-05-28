@@ -1,8 +1,9 @@
+import { NextResponse } from 'next/server';
+
 // src/app/api/dashboard/statistics/route.ts
-import { auth } from "@/auth";
-import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
-import { RequestType } from "@prisma/client";
+import { auth } from '@/auth';
+import { db } from '@/lib/db';
+import { RequestType } from '@prisma/client';
 
 export async function GET() {
   try {
@@ -12,6 +13,14 @@ export async function GET() {
     }
 
     const userId = session.user.id;
+
+
+        // Get count of equipment registered by user
+    const userRegisteredEquipmentCount = await db.equipment.count({
+      where: {
+        registered_by: userId
+      }
+    });
 
     // Fetch user's groups and permissions
     const userGroups = await db.userGroup.findMany({
@@ -289,7 +298,8 @@ export async function GET() {
           groups: groupNames,
           isAdmin,
           isTechnician,
-          departments: userDepartmentIds
+          departments: userDepartmentIds,
+          registered_equipment_count: userRegisteredEquipmentCount
         },
         equipment: equipmentData,
         requests: requestData
