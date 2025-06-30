@@ -232,6 +232,77 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+export async function fetch_equipment_for_reports() {
+  try {
+    const equipment = await db.equipment.findMany({
+      include: {
+        direction: true,
+        department: true,
+        sector: true,
+        service: true,
+        repartition: true,
+        registeredBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        images: true,
+      },
+      orderBy: [
+        { direction: { name: 'asc' } },
+        { department: { name: 'asc' } },
+        { type: 'asc' },
+        { brand: 'asc' },
+        { model: 'asc' },
+      ],
+    });
+
+    // Get summary statistics
+    const totalEquipment = equipment.length;
+    const activeEquipment = equipment.filter(e => e.status === 'ACTIVO').length;
+    const maintenanceEquipment = equipment.filter(e => e.status === 'MANUTENÇÃO').length;
+    const inactiveEquipment = equipment.filter(e => e.status === 'INACTIVO').length;
+
+    // Group by type
+    const equipmentByType = equipment.reduce((acc, item) => {
+      acc[item.type] = (acc[item.type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Group by direction
+    const equipmentByDirection = equipment.reduce((acc, item) => {
+      const directionName = item.direction?.name || 'Sem Direção';
+      acc[directionName] = (acc[directionName] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Group by status
+    const equipmentByStatus = {
+      'ACTIVO': activeEquipment,
+      'MANUTENÇÃO': maintenanceEquipment,
+      'INACTIVO': inactiveEquipment,
+    };
+
+    return {
+      equipment,
+      summary: {
+        total: totalEquipment,
+        active: activeEquipment,
+        maintenance: maintenanceEquipment,
+        inactive: inactiveEquipment,
+        byType: equipmentByType,
+        byDirection: equipmentByDirection,
+        byStatus: equipmentByStatus,
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching equipment for reports:", error);
+    throw new Error("Failed to fetch equipment data for reports");
+  }
+}
+
 export async function create_equipment(formData: FormData) {
   const data: EquipmentFormData = {
     serial_number: formData.get("serial_number") as string,

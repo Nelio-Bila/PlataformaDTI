@@ -6,7 +6,7 @@ import { z } from "zod";
 export type EquipmentImage = {
   id: string;
   url: string;
-  cloudinary_public_id: string;
+  cloudinary_public_id: string | null;
   equipment_id: string;
   description?: string | null;
   created_at: string;
@@ -14,7 +14,7 @@ export type EquipmentImage = {
 
 export type Equipment = {
   id: string;
-  serial_number: string;
+  serial_number: string | null;
   type: string;
   brand: string;
   model: string;

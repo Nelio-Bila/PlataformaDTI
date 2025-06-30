@@ -15,6 +15,12 @@ export const navItems: NavItem[] = [
     label: "Equipamentos",
   },
   {
+    title: "Relatórios",
+    href: "/reports",
+    icon: "reports",
+    label: "Relatórios",
+  },
+  {
     title: "Gestão de requisições",
     href: "/requests",
     icon: "fileText",

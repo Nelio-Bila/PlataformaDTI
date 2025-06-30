@@ -36,6 +36,9 @@ export default function Sidebar({ className }: SidebarProps) {
     if (item.title === "Equipamento Informático") {
       return isAdmin || isTechnician; // Admins and Technicians see Equipment
     }
+    if (item.title === "Relatórios") {
+      return isAdmin || isTechnician; // Admins and Technicians see Reports
+    }
     return true; // Other items (Dashboard, Requests) are visible to all
   });
 
