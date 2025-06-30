@@ -208,3 +208,64 @@ body {
     @apply bg-sidebar-primary text-white opacity-100 hover:opacity-95;
   }
 }
+
+/* Print styles for reports */
+@media print {
+  @page {
+    margin: 1in;
+    size: A4;
+  }
+  
+  body {
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+  
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  .print\:block {
+    display: block !important;
+  }
+  
+  .print\:space-y-4 > * + * {
+    margin-top: 1rem !important;
+  }
+  
+  .print\:break-inside-avoid {
+    break-inside: avoid;
+  }
+  
+  .print\:break-after-page {
+    break-after: page;
+  }
+  
+  /* Ensure cards and content are visible in print */
+  .bg-card,
+  .border {
+    border: 1px solid #e5e7eb !important;
+    background: white !important;
+  }
+  
+  /* Ensure text is black in print */
+  .text-muted-foreground {
+    color: #6b7280 !important;
+  }
+  
+  /* Ensure badges are visible */
+  .bg-green-100,
+  .bg-yellow-100,
+  .bg-red-100 {
+    background-color: #f3f4f6 !important;
+    border: 1px solid #d1d5db !important;
+  }
+  
+  /* Progress bars */
+  .bg-blue-600,
+  .bg-green-600,
+  .bg-yellow-600,
+  .bg-red-600 {
+    background-color: #374151 !important;
+  }
+}
